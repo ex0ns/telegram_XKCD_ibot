@@ -2,7 +2,10 @@ package me.ex0ns.inlinexkcd.bot
 
 import com.typesafe.scalalogging.Logger
 import info.mukel.telegrambot4s.api._
+import info.mukel.telegrambot4s.methods.AnswerInlineQuery
+import info.mukel.telegrambot4s.models.{InlineQuery, InlineQueryResultPhoto}
 import me.ex0ns.inlinexkcd.database.Database
+import org.mongodb.scala.bson.BsonString
 import org.slf4j.LoggerFactory
 
 import scala.io.Source
@@ -19,20 +22,11 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling{
 
   logger.debug("Bot is up and running !")
 
-  on("/search") { implicit  msg => args =>
-    database.search(args.mkString(" ")).map(x => {
-      reply({
-        x.take(1).map(y => y.toJson()).mkString(" and ")
-      })
+  override def handleInlineQuery(inlineQuery: InlineQuery) = {
+    database.search(inlineQuery.query).map(documents => {
+      val urls : Seq[String] = documents.map(_.get[BsonString]("img").get.getValue)
+      val pictures = urls.zipWithIndex.map{case (x,i) => InlineQueryResultPhoto(i.toString, x, x)}
+      api.request(AnswerInlineQuery(inlineQuery.id, pictures))
     })
   }
-
-  on("/help") { implicit msg => _ =>
-    reply(usage)
-  }
-
-  val usage: String =
-    """
-      |Inline KXCD usage
-    """.stripMargin
 }
