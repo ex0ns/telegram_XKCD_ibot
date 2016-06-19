@@ -7,15 +7,16 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-import scala.util.{Failure, Success}
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
+import scala.util.{Failure, Success, Try}
 
 /**
   * Created by ex0ns on 6/8/16.
   */
 class XKCDHttpParser {
 
-  private val MAX_CONTIGUOUS_FAILURE = 10
+  private val MAX_CONTIGUOUS_FAILURE = 5
   private val logger = Logger(LoggerFactory.getLogger(classOf[XKCDHttpParser]))
   private val database = new Database()
   private val listOfFutures = ArrayBuffer[Future[_]]()
@@ -38,40 +39,34 @@ class XKCDHttpParser {
     }
   }
 
+  /**
+    * Convert a Future[T] to Future[Try] to be able to count the number of failed/successful Future
+    * See http://stackoverflow.com/questions/20874186/scala-listfuture-to-futurelist-disregarding-failed-futures
+    * @param f The future to convert
+    * @return A future of Try
+    */
+  private def futureToFutureTry[T](f: Future[T]): Future[Try[T]] = f.map(Success(_)).recover({
+    case e => logger.warn(e.toString); Failure(e)
+  })
+
+  /**
+    * Fetch in parallel size pages, startin from startingPage, and returns the number of failed Future
+    * @param startingPage Index of the starting page
+    * @param size The size of the range
+    * @return the number of failed Future
+    */
+  private def bulkFetch(startingPage: Int, size: Int) = {
+    val t = Range(startingPage, startingPage+size).take(size).map(parseID).map(futureToFutureTry)
+    val r = Await.result(Future.sequence(t), Duration("10 seconds"))
+    r.count(_.isFailure)
+  }
 
   /**
     * Fetch and parse all XKCD comics
+    * @param step The number of pages to fetch in parallel
     */
-  def parseAll() = {
-    def handler(id: Int, failures: Int = 0): Unit = {
-      if(failures > MAX_CONTIGUOUS_FAILURE) {
-        logger.debug(s"Reached $failures contiguous error, shutting down")
-        return
-      }
-      val download = parseID(id)
-      listOfFutures += download
-      download onComplete   {
-        case Success(_) => handler(id+1, 0)
-        case Failure(e) =>
-          logger.warn(e.toString)
-          handler(id+1, failures+1)
-      }
-    }
-
-    //@TODO: make queries run in parallel
-    handler(1)
-
-    while(listOfFutures.nonEmpty) {
-      println(listOfFutures.size)
-      listOfFutures.foreach {
-        future =>
-          if(future.isCompleted) {
-            listOfFutures -= future
-          }
-      }
-      Thread.sleep(500)
-    }
-
+  def parseAll(step: Int = 10) = {
+    Stream.from(0, step).map(x => bulkFetch(x, step)).takeWhile(_ < MAX_CONTIGUOUS_FAILURE).force
   }
 
 }
