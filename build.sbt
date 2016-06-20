@@ -11,3 +11,5 @@ libraryDependencies ++= Seq(
   "fr.hmil" %% "scala-http-client" % "0.3.0",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0"
 )
+
+unmanagedResourceDirectories in Compile += { baseDirectory.value / "keys/telegram.key" }
