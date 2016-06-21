@@ -1,6 +1,6 @@
 name := "InlineXKCD"
 version := "0.1"
-scalaVersion := "2.11.7"
+scalaVersion := "2.11.8"
 
 resolvers += "jitpack" at "https://jitpack.io"
 scalacOptions ++= Seq("-feature")
@@ -11,5 +11,3 @@ libraryDependencies ++= Seq(
   "fr.hmil" %% "scala-http-client" % "0.3.0",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0"
 )
-
-unmanagedResourceDirectories in Compile += { baseDirectory.value / "keys/telegram.key" }

@@ -16,7 +16,7 @@ import scala.io.Source
   */
 object InlineXKCDBot extends TelegramBot with Commands with Polling{
 
-  override def token = Source.fromFile("keys/telegram.key").getLines().next
+  override def token = Source.fromFile("telegram.key").getLines().next
   private val logger = Logger(LoggerFactory.getLogger(InlineXKCDBot.getClass))
   private val database = new Database()
 
