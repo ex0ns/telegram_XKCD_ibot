@@ -19,7 +19,6 @@ class XKCDHttpParser {
   private val MAX_CONTIGUOUS_FAILURE = 5
   private val logger = Logger(LoggerFactory.getLogger(classOf[XKCDHttpParser]))
   private val database = new Database()
-  private val listOfFutures = ArrayBuffer[Future[_]]()
 
   /**
     * Fetch XKCD comic based on its ID

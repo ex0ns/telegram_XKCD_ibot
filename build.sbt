@@ -9,5 +9,6 @@ libraryDependencies ++= Seq(
   "com.github.mukel" %% "telegrambot4s" % "v1.2.0",
   "org.mongodb.scala" %% "mongo-scala-driver" % "1.1.1",
   "fr.hmil" %% "scala-http-client" % "0.3.0",
-  "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0"
+  "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0",
+  "com.github.philcali" %% "cronish" % "0.1.3"
 )
