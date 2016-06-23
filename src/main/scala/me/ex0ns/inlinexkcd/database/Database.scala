@@ -4,6 +4,7 @@ import com.typesafe.scalalogging.Logger
 import org.mongodb.scala.bson._
 import org.mongodb.scala.model.Filters._
 import org.mongodb.scala.model.Sorts._
+import org.mongodb.scala.model.Updates._
 import org.mongodb.scala.{Document, MongoClient, MongoCollection}
 import org.slf4j.LoggerFactory
 
@@ -71,6 +72,14 @@ class Database {
     */
   def lastID(): Future[Document] = {
     collection.find().sort(descending("_id")).head()
+  }
+
+  /**
+    * Increase the view counter for a given ID
+    * @param id the ID of the comic
+    */
+  def increaseViews(id: Int): Future[Document] = {
+    collection.findOneAndUpdate(equal("_id", id), inc("views", 1)).head()
   }
 
 }

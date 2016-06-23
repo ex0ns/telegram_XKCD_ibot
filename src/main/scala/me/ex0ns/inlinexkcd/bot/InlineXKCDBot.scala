@@ -8,10 +8,11 @@ import info.mukel.telegrambot4s.methods.AnswerInlineQuery
 import info.mukel.telegrambot4s.models._
 import me.ex0ns.inlinexkcd.database.Database
 import me.ex0ns.inlinexkcd.parser.XKCDHttpParser
-import org.mongodb.scala.bson.{BsonInt32, BsonObjectId, BsonString}
+import org.mongodb.scala.bson.{BsonInt32, BsonString}
 import org.slf4j.LoggerFactory
 
 import scala.io.Source
+import scala.util.{Failure, Success}
 
 /**
   * Created by ex0ns on 06/08/16.
@@ -37,9 +38,18 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling{
 
   override def handleInlineQuery(inlineQuery: InlineQuery) = {
     database.search(inlineQuery.query).map(documents => {
-      val urls : Seq[String] = documents.map(_.get[BsonString]("img").get.getValue)
-      val pictures = urls.zipWithIndex.map{case (x,i) => InlineQueryResultPhoto(i.toString, x, x)}
+      val results = documents.map(document =>
+        (document.get[BsonInt32]("_id").get.intValue().toString, document.get[BsonString]("img").get.getValue))
+
+      val pictures = results.map{case (id, url) => InlineQueryResultPhoto(id, url, url)}
       api.request(AnswerInlineQuery(inlineQuery.id, pictures))
     })
+  }
+
+  /*
+   * /setinlinefeedback must be enable for the bot
+   */
+  override def handleChosenInlineResult(chosenInlineResult: ChosenInlineResult) = {
+    database.increaseViews(chosenInlineResult.resultId.toInt)
   }
 }
