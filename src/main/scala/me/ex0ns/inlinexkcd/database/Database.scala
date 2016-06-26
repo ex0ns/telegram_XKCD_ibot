@@ -19,12 +19,7 @@ class Database {
   private val collection: MongoCollection[Document] = database.getCollection("comics")
   private val logger = Logger(LoggerFactory.getLogger(classOf[Database]))
 
-  Seq(
-    collection.createIndex(Document("title" -> "text")),
-    collection.createIndex(Document("alt" -> "text")),
-    collection.createIndex(Document("transcript" -> "text"))
-  ).foreach(_.head())
-
+  collection.createIndex(Document("transcript" -> "text", "title" -> "text", "alt" -> "text")).head()
 
   /**
     * Inserts a XKCD comic given its id
