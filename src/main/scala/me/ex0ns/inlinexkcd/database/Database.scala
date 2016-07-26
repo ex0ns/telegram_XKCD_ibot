@@ -14,6 +14,7 @@ import scala.concurrent.Future
   * Created by ex0ns on 6/8/16.
   */
 class Database {
+  private val DEFAULT_LIMIT_SIZE = 15
   private val mongoClient = MongoClient()
   private val database = mongoClient.getDatabase("xkcd")
   private val collection: MongoCollection[Document] = database.getCollection("comics")
@@ -58,7 +59,15 @@ class Database {
     * @param word list of words to search
     */
   def search(word: String) : Future[Seq[Document]] = {
-    collection.find(text(word)).sort(descending("year", "month")).toFuture()
+    collection.find(text(word)).sort(descending("_id")).toFuture()
+  }
+
+  /**
+    * Find the latest published comics
+    * @return the newer comics
+    */
+  def lasts : Future[Seq[Document]] = {
+    collection.find().sort(descending("_id")).limit(DEFAULT_LIMIT_SIZE).toFuture()
   }
 
   /**

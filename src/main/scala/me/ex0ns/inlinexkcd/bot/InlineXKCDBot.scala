@@ -34,14 +34,15 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling{
     }
   }
 
-  parseComic executes Cron("00", "00", "16", "*", "*", "1,3,5", "*") //"every Monday, Wednesday, Friday at 16"
+  parseComic executes Cron("00", "00", "10", "*", "*", "1,3,5", "*") //"every Monday, Wednesday, Friday at 10"
 
   override def handleInlineQuery(inlineQuery: InlineQuery) = {
-    database.search(inlineQuery.query).map(documents => {
+    val results = if(inlineQuery.query.isEmpty) database.lasts else  database.search(inlineQuery.query)
+    results.map(documents => {
       val results = documents.map(document =>
         (document.get[BsonInt32]("_id").get.intValue().toString, document.get[BsonString]("img").get.getValue))
 
-      val pictures = results.map{case (id, url) => InlineQueryResultPhoto(id, url, url)}
+      val pictures = results.map { case (id, url) => InlineQueryResultPhoto(id, url, url) }
       api.request(AnswerInlineQuery(inlineQuery.id, pictures))
     })
   }
