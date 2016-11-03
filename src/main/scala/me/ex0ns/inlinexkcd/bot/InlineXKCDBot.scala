@@ -26,18 +26,19 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling{
 
   logger.debug("Bot is up and running !")
 
-  val parseComic = task {
-    database.lastID().onSuccess {
+  def parseComic : Unit = {
+    database.lastID() onSuccess {
       case document =>
         val id = document.get[BsonInt32]("_id").get.intValue()
-        parser.parseID(id + 1)
+        // Try to parse comics as long as ID is valid (many published the same day, or we missed one day)
+        parser.parseID(id + 1) onSuccess   { case _ =>  parseComic }
     }
   }
 
-  parseComic executes Cron("00", "00", "10", "*", "*", "1,3,5", "*") //"every Monday, Wednesday, Friday at 10"
+  task(parseComic) executes Cron("00", "*/30", "12-18", "*", "*", "1,3,5", "*") //" every half hour, every Monday, Wednesday, Friday between 12 and 18"
 
   override def handleInlineQuery(inlineQuery: InlineQuery) = {
-    val results = if(inlineQuery.query.isEmpty) database.lasts else  database.search(inlineQuery.query)
+    val results = if(inlineQuery.query.isEmpty) database.lasts else database.search(inlineQuery.query)
     results.map(documents => {
       val results = documents.map(document =>
         (document.get[BsonInt32]("_id").get.intValue().toString, document.get[BsonString]("img").get.getValue))

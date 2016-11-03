@@ -49,7 +49,7 @@ class XKCDHttpParser {
   })
 
   /**
-    * Fetch in parallel size pages, startin from startingPage, and returns the number of failed Future
+    * Fetch in parallel size pages, starting from startingPage, and returns the number of failed Future
     * @param startingPage Index of the starting page
     * @param size The size of the range
     * @return the number of failed Future
