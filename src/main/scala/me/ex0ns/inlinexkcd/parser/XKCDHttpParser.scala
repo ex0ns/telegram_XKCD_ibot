@@ -2,7 +2,7 @@ package me.ex0ns.inlinexkcd.parser
 
 import com.typesafe.scalalogging.Logger
 import fr.hmil.scalahttp.client.HttpRequest
-import me.ex0ns.inlinexkcd.database.Database
+import me.ex0ns.inlinexkcd.database.{Comics, Database}
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ArrayBuffer
@@ -18,7 +18,7 @@ class XKCDHttpParser {
 
   private val MAX_CONTIGUOUS_FAILURE = 5
   private val logger = Logger(LoggerFactory.getLogger(classOf[XKCDHttpParser]))
-  private val database = new Database()
+  private val comics = new Comics()
 
   /**
     * Fetch XKCD comic based on its ID
@@ -26,14 +26,14 @@ class XKCDHttpParser {
     * @param id the ID of the strip to fetch
     */
   def parseID(id: Int) : Future[_] = {
-    val document = database.exists(id)
+    val document = comics.exists(id)
     document.flatMap {
       case true =>
         logger.debug(s"Document with id: $id already exists")
         Future.successful(true) // we do not want to stop at the first item we have in the DB
       case false =>
         HttpRequest(s"http://xkcd.com/$id/info.0.json").send().map(httpResponse => {
-          database.insert(httpResponse.body)
+          comics.insert(httpResponse.body)
         })
     }
   }
