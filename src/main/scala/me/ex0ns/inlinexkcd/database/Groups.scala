@@ -9,10 +9,10 @@ import org.slf4j.LoggerFactory
 /**
   * Created by ex0ns on 11/4/16.
   */
-final class Groups extends Collection with Database {
+final object Groups extends Collection with Database {
 
   override val collection = database.getCollection("groups")
-  override val logger = Logger(LoggerFactory.getLogger(classOf[Groups]))
+  override val logger = Logger(LoggerFactory.getLogger(Groups.getClass))
 
   /**
     * Insert a new group to the database
@@ -28,6 +28,6 @@ final class Groups extends Collection with Database {
     * Remove a group from the database
     * @param groupId the id of the group to remove
     */
-  def remove(groupId: String) = collection.deleteOne(equal("_id", BsonString(groupId))).head()
+  def remove(groupId: String) = collection.deleteOne(equal("_id", BsonString(groupId))).toFuture()
 
 }

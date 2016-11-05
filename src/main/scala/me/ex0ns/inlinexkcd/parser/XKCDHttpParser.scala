@@ -18,7 +18,6 @@ class XKCDHttpParser {
 
   private val MAX_CONTIGUOUS_FAILURE = 5
   private val logger = Logger(LoggerFactory.getLogger(classOf[XKCDHttpParser]))
-  private val comics = new Comics()
 
   /**
     * Fetch XKCD comic based on its ID
@@ -26,14 +25,14 @@ class XKCDHttpParser {
     * @param id the ID of the strip to fetch
     */
   def parseID(id: Int) : Future[_] = {
-    val document = comics.exists(id)
+    val document = Comics.exists(id)
     document.flatMap {
       case true =>
         logger.debug(s"Document with id: $id already exists")
         Future.successful(true) // we do not want to stop at the first item we have in the DB
       case false =>
         HttpRequest(s"http://xkcd.com/$id/info.0.json").send().map(httpResponse => {
-          comics.insert(httpResponse.body)
+          Comics.insert(httpResponse.body)
         })
     }
   }

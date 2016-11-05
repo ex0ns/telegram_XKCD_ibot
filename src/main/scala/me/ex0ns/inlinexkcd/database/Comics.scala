@@ -13,10 +13,10 @@ import scala.concurrent.Future
 /**
   * Created by ex0ns on 11/4/16.
   */
-final class Comics extends Collection with Database {
+final object Comics extends Collection with Database {
 
   override val collection = database.getCollection("comics")
-  override val logger = Logger(LoggerFactory.getLogger(classOf[Comics]))
+  override val logger = Logger(LoggerFactory.getLogger(Comics.getClass))
 
   collection.createIndex(Document("transcript" -> "text", "title" -> "text", "alt" -> "text")).head()
 
