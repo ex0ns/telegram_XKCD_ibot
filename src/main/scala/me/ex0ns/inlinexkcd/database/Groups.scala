@@ -30,4 +30,10 @@ final object Groups extends Collection with Database {
     */
   def remove(groupId: String) = collection.deleteOne(equal("_id", BsonString(groupId))).toFuture()
 
+  /**
+    * Find all the documents in the collcetion
+    * @return  all the document in the collection
+    */
+  def all = collection.find().toFuture()
+
 }

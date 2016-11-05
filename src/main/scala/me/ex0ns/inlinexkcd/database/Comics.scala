@@ -2,7 +2,7 @@ package me.ex0ns.inlinexkcd.database
 
 import com.typesafe.scalalogging.Logger
 import org.mongodb.scala._
-import org.mongodb.scala.bson.{collection, Document => _, _}
+import org.mongodb.scala.bson.{Document => _, _}
 import org.mongodb.scala.model.Filters._
 import org.mongodb.scala.model.Sorts._
 import org.mongodb.scala.model.Updates._

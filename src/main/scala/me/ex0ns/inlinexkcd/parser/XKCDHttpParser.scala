@@ -2,10 +2,9 @@ package me.ex0ns.inlinexkcd.parser
 
 import com.typesafe.scalalogging.Logger
 import fr.hmil.scalahttp.client.HttpRequest
-import me.ex0ns.inlinexkcd.database.{Comics, Database}
+import me.ex0ns.inlinexkcd.database.Comics
 import org.slf4j.LoggerFactory
 
-import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -23,6 +22,7 @@ class XKCDHttpParser {
     * Fetch XKCD comic based on its ID
     *
     * @param id the ID of the strip to fetch
+    * @return a future that may contain the HttpResponse (if successful)
     */
   def parseID(id: Int) : Future[_] = {
     val document = Comics.exists(id)
@@ -33,6 +33,7 @@ class XKCDHttpParser {
       case false =>
         HttpRequest(s"http://xkcd.com/$id/info.0.json").send().map(httpResponse => {
           Comics.insert(httpResponse.body)
+          httpResponse
         })
     }
   }

@@ -1,7 +1,7 @@
 package me.ex0ns.inlinexkcd.database
 
 import com.typesafe.scalalogging.Logger
-import org.mongodb.scala.{Document, MongoClient, MongoCollection}
+import org.mongodb.scala.MongoClient
 
 /**
   * Created by ex0ns on 6/8/16.
