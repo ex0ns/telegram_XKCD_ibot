@@ -65,9 +65,7 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling {
 
   parseComic // Parse comics we could have missed
 
-  task(parseComic) executes Cron("00", "*/30", "12-18", "*", "*", "1,3,5", "*")
-
-  //" every half hour, every Monday, Wednesday, Friday between 12 and 18"
+  task(parseComic) executes Cron("00", "*/15", "9-23", "*", "*", "*", "*")
 
   override def handleInlineQuery(inlineQuery: InlineQuery) = {
     val results = if (inlineQuery.query.isEmpty) Comics.lasts else Comics.search(inlineQuery.query)

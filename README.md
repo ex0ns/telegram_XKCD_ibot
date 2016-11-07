@@ -21,6 +21,14 @@ This will create a database called 'xkcd' and a 'comics' collection within it.
 
 Then you can run the bot using ```sbt run``` with no parameters.
 
+### Features
+
+You can search and post XKCD comics using the inline features of the bot ```@xkcdibot search```. If `search` is empty, 
+then it will display the latest XKCD (ordered by date). 
+Currently, the number of results is limiter to 50.
+
+If you add the bot to a group, it will then automatically publish every new XKCD as soon as it's available.
+
 ### JAR
 
 [SBT Assembly](https://github.com/sbt/sbt-assembly) is used to generate a single portable jar, juste run ```sbt assembly``` to create it.
