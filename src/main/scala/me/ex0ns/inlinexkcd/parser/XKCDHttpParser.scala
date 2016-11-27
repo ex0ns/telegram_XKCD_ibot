@@ -15,7 +15,6 @@ import scala.util.{Failure, Success, Try}
   */
 class XKCDHttpParser {
 
-  private val MAX_CONTIGUOUS_FAILURE = 5
   private val logger = Logger(LoggerFactory.getLogger(classOf[XKCDHttpParser]))
 
   /**
@@ -56,7 +55,7 @@ class XKCDHttpParser {
     */
   private def bulkFetch(startingPage: Int, size: Int) = {
     val t = Range(startingPage, startingPage+size).take(size).map(parseID).map(futureToFutureTry)
-    val r = Await.result(Future.sequence(t), Duration("10 seconds"))
+    val r = Await.result(Future.sequence(t), Duration.Inf)
     r.count(_.isFailure)
   }
 
@@ -65,7 +64,7 @@ class XKCDHttpParser {
     * @param step The number of pages to fetch in parallel
     */
   def parseAll(step: Int = 10) = {
-    Stream.from(0, step).map(x => bulkFetch(x, step)).takeWhile(_ < MAX_CONTIGUOUS_FAILURE).force
+    Stream.from(0, step).map(x => bulkFetch(x, step)).takeWhile(_ != step).force
   }
 
 }

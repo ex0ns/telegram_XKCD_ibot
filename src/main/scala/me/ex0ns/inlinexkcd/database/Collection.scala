@@ -38,4 +38,10 @@ trait Collection {
     */
   def lasts = collection.find().sort(descending("_id")).limit(DEFAULT_LIMIT_SIZE).toFuture()
 
+  /**
+    * Check if the the collection is empty
+    * @return a future containing a boolean regarding the emptiness of the collection
+    */
+  def empty = collection.count().map(_ == 0).head()
+
 }

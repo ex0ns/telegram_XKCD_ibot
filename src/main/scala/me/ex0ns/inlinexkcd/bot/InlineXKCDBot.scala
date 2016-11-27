@@ -16,13 +16,14 @@ import org.slf4j.LoggerFactory
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.io.Source
+import scala.util.Properties
 
 /**
   * Created by ex0ns on 06/08/16.
   */
 object InlineXKCDBot extends TelegramBot with Commands with Polling {
 
-  override def token = Source.fromFile("telegram.key").getLines().next
+  override def token = Properties.envOrNone("TELEGRAM_KEY").getOrElse(Source.fromFile("telegram.key").getLines().next)
 
   private val MESSAGES_LIMIT = 30
   private val MESSAGES_LIMIT_TIME = 1000
@@ -34,38 +35,39 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling {
 
   logger.debug("Bot is up and running !")
 
-
-  def parseComic: Unit = {
+  def parseComic(notify : Boolean = false): Unit = {
 
     def notifyAllGroups(url: String) = {
       Groups.all.map((documents) => {
         documents.grouped(MESSAGES_LIMIT).foreach((documents) => {
-          documents.foreach((document) => {
-            val id = document.get[BsonString]("_id").get.getValue.toLong
+          documents.flatMap(_.get[BsonString]("_id")).map(_.getValue.toLong).foreach(id => {
             api.request(SendPhoto(Left(id), Right(url)))
           })
           Thread.sleep(MESSAGES_LIMIT_TIME) // Avoid hitting Telegram Limit
         })
-        parseComic
+        parseComic(notify)
       })
     }
 
     Comics.lastID onSuccess {
       case document =>
-        val id = document.get[BsonInt32]("_id").get.intValue()
-        // Try to parse comics as long as ID is valid (many published the same day, or we missed one day)
-        parser.parseID(id + 1) onSuccess {
-          case response: HttpResponse =>
-            val url = Document(response.body).get[BsonString]("img").get.getValue
-            notifyAllGroups(url)
-          case _ => parseComic
-        }
+        document.get[BsonInt32]("_id").map(_.intValue()).foreach(id => {
+          // Try to parse comics as long as ID is valid (many published the same day, or we missed one day)
+          parser.parseID(id + 1) onSuccess {
+            case response: HttpResponse if notify =>
+              Document(response.body).get[BsonString]("img").map(_.getValue).foreach(notifyAllGroups(_))
+            case _ => parseComic(notify)
+          }
+        })
     }
   }
 
-  parseComic // Parse comics we could have missed
+  Comics.empty onSuccess  {
+    case true   => parser.parseAll()
+    case false  => parseComic() // Parse comics we could have missed
+  }
 
-  task(parseComic) executes Cron("00", "*/15", "9-23", "*", "*", "*", "*")
+  task(parseComic(true)) executes Cron("00", "*/15", "9-23", "*", "*", "*", "*")
 
   override def handleInlineQuery(inlineQuery: InlineQuery) = {
     val results = if (inlineQuery.query.isEmpty) Comics.lasts else Comics.search(inlineQuery.query)
