@@ -33,7 +33,31 @@ If you add the bot to a group, it will then automatically publish every new XKCD
 
 [SBT Assembly](https://github.com/sbt/sbt-assembly) is used to generate a single portable jar, juste run ```sbt assembly``` to create it.
 When deploying the JAR, do not forget to send the ```telegram.key``` file as well (not bundle inside the JAR for security reasons).
+ 
+### Docker
 
+The easiest way to run your own copy of this bot (why would you even need to do that ??) is to use the docker image available [here](https://hub.docker.com/r/ex0ns/inlinexkcd/).
+You'll need to pass `TELEGRAM_KEY` environment variable to docker for the bot to work.
+
+In order for the docker to connect to the database on localhost, you must run it with `--net=host` option. 
+You can also give `DB_URL` and `DB_PORT` environment variables to connect to a mongoDB server.
+
+```bash
+# Using a mongoDB instance on host
+docker run -e "TELEGRAM_KEY=$(cat telegram.key)" --net=host --name inlinexkcd ex0ns/inlinexkcd:latest
+# Using a remote mongoDB intance
+sudo docker run -e "TELEGRAM_KEY=$(cat telegram.key) DB_URL=10.0.1.1 DB_PORT=27017" --name inlinexkcd ex0ns/inlinexkcd:latest
+```
+
+We use [docker-compose](https://docs.docker.com/compose/) to deploy a new MongoDB container as well as one running the actual bot.
+If you cloned the repo, then simply run `sbt dockerComposeUp` to run docker compose and deploy the two new containers.
+
+Otherwise you could just get a copy of the [dockerfile](https://raw.githubusercontent.com/ex0ns/telegram_XKCD_ibot/master/docker/docker-compose.yml) and run:
+
+```bash
+wget https://raw.githubusercontent.com/ex0ns/telegram_XKCD_ibot/master/docker/docker-compose.yml
+TELEGRAM_KEY=$(cat telegram.key) docker-compose up
+```
 
 ### Testing
 

@@ -1,0 +1,11 @@
+InlineXKCD:
+  image: ex0ns/inlinexkcd:latest
+  environment:
+      DB_URL: db
+      DB_PORT: 27017
+      TELEGRAM_KEY: "${TELEGRAM_KEY}"
+  links:
+   - db
+db:
+  image: mongo:3.0.2
+  command: --smallfiles
