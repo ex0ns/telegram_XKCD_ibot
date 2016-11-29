@@ -5,7 +5,7 @@ import cronish.Cron
 import cronish.dsl._
 import fr.hmil.scalahttp.client.HttpResponse
 import info.mukel.telegrambot4s.api._
-import info.mukel.telegrambot4s.methods.{AnswerInlineQuery, GetMe, SendPhoto}
+import info.mukel.telegrambot4s.methods.{AnswerInlineQuery, GetMe, SendMessage, SendPhoto}
 import info.mukel.telegrambot4s.models._
 import me.ex0ns.inlinexkcd.database.{Comics, Groups}
 import me.ex0ns.inlinexkcd.parser.XKCDHttpParser
@@ -37,11 +37,12 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling {
 
   def parseComic(notify : Boolean = false): Unit = {
 
-    def notifyAllGroups(url: String) = {
+    def notifyAllGroups(url: String, alt: String) = {
       Groups.all.map((documents) => {
         documents.grouped(MESSAGES_LIMIT).foreach((documents) => {
           documents.flatMap(_.get[BsonString]("_id")).map(_.getValue.toLong).foreach(id => {
             api.request(SendPhoto(Left(id), Right(url)))
+            api.request(SendMessage(Left(id), alt))
           })
           Thread.sleep(MESSAGES_LIMIT_TIME) // Avoid hitting Telegram Limit
         })
@@ -55,7 +56,10 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling {
           // Try to parse comics as long as ID is valid (many published the same day, or we missed one day)
           parser.parseID(id + 1) onSuccess {
             case response: HttpResponse if notify =>
-              Document(response.body).get[BsonString]("img").map(_.getValue).foreach(notifyAllGroups(_))
+              val doc = Document(response.body)
+              List("img", "alt").flatMap(doc.get[BsonString](_).map(_.getValue)) match {
+                case img :: alt :: _ => notifyAllGroups(img, alt)
+              }
             case _ => parseComic(notify)
           }
         })
