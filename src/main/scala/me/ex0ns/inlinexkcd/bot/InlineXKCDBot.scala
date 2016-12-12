@@ -43,11 +43,11 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling {
       Groups.all.map((documents) => {
         documents.grouped(MESSAGES_LIMIT).foreach((documents) => {
           documents.flatMap(_.get[BsonString]("_id")).map(_.getValue.toLong).foreach(id => {
-            api.request(SendMessage(Left(id), title, parseMode = ParseMode.Markdown))
+            api.request(SendMessage(Left(id), title, Some(ParseMode.Markdown)))
             Thread.sleep(MESSAGE_ORDER_DELAY) // Avoid undeterministic sending order 
             api.request(SendPhoto(Left(id), Right(url)))
             Thread.sleep(MESSAGE_ORDER_DELAY)
-            api.request(SendMessage(Left(id), text, parseMode = ParseMode.Markdown))
+            api.request(SendMessage(Left(id), text, Some(ParseMode.Markdown)))
           })
           Thread.sleep(MESSAGES_LIMIT_TIME) // Avoid hitting Telegram Limit
         })
@@ -64,8 +64,8 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling {
               val doc = Document(response.body)
               List("img", "title", "alt", "link").flatMap(doc.get[BsonString](_).map(_.getValue)) match {
                 case img :: title :: alt :: link :: _ => 
-                  val text = "_" + alt + "_" + (if (!link.isEmpty) s"\n\n$link" else "")
-                  notifyAllGroups(img, "*" + title + "*", text)
+                  val text = alt.italic + (if (!link.isEmpty) s"\n\n$link" else "")
+                  notifyAllGroups(img, title.bold, text)
               }
             case _ => parseComic(notify)
           }

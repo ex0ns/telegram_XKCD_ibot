@@ -1,0 +1,16 @@
+package me.ex0ns.inlinexkcd.bot
+
+/**
+  * Created by thibault on 12/12/16.
+  */
+
+object implicit {
+	implicit class MarkdownString(string: String) {
+		def bold = s"*$string*"
+		def italic = s"_$string_"
+		def urlWithAlt(alt: String) = s"[$alt]($string)"
+		def altWithUrl(url: String) = s"[$string]($url)"
+		def inlineCode = s"`$string`"
+		def blockCode = s"```$string```"
+	}
+}
