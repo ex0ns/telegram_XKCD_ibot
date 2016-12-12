@@ -28,6 +28,8 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling {
   private val MESSAGES_LIMIT = 30
   private val MESSAGES_LIMIT_TIME = 1000
 
+  private val MESSAGE_ORDER_DELAY = 200
+  
   private val me = Await.result(api.request(GetMe), Duration.Inf)
   private val logger = Logger(LoggerFactory.getLogger(InlineXKCDBot.getClass))
 
@@ -37,12 +39,15 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling {
 
   def parseComic(notify : Boolean = false): Unit = {
 
-    def notifyAllGroups(url: String, alt: String) = {
+    def notifyAllGroups(url: String, title: String, text: String) = {
       Groups.all.map((documents) => {
         documents.grouped(MESSAGES_LIMIT).foreach((documents) => {
           documents.flatMap(_.get[BsonString]("_id")).map(_.getValue.toLong).foreach(id => {
+            api.request(SendMessage(Left(id), title))
+            Thread.sleep(MESSAGE_ORDER_DELAY) // Avoid undeterministic sending order 
             api.request(SendPhoto(Left(id), Right(url)))
-            api.request(SendMessage(Left(id), alt))
+            Thread.sleep(MESSAGE_ORDER_DELAY)
+            api.request(SendMessage(Left(id), text))
           })
           Thread.sleep(MESSAGES_LIMIT_TIME) // Avoid hitting Telegram Limit
         })
@@ -57,8 +62,10 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling {
           parser.parseID(id + 1) onSuccess {
             case response: HttpResponse if notify =>
               val doc = Document(response.body)
-              List("img", "alt").flatMap(doc.get[BsonString](_).map(_.getValue)) match {
-                case img :: alt :: _ => notifyAllGroups(img, alt)
+              List("img", "title", "alt", "link").flatMap(doc.get[BsonString](_).map(_.getValue)) match {
+                case img :: title :: alt :: link :: _ => 
+                  val text = alt + (if (!link.isEmpty) s"\n\n$link" else "")
+                  notifyAllGroups(img, title, text)
               }
             case _ => parseComic(notify)
           }
