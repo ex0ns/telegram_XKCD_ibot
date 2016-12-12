@@ -4,7 +4,7 @@ package me.ex0ns.inlinexkcd.bot
   * Created by thibault on 12/12/16.
   */
 
-object implicit {
+object StringHelpers {
 	implicit class MarkdownString(string: String) {
 		def bold = s"*$string*"
 		def italic = s"_$string_"
