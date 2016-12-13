@@ -5,9 +5,11 @@ import cronish.Cron
 import cronish.dsl._
 import fr.hmil.scalahttp.client.HttpResponse
 import info.mukel.telegrambot4s.api._
-import info.mukel.telegrambot4s.methods.{AnswerInlineQuery, GetMe, SendMessage, SendPhoto}
+import info.mukel.telegrambot4s.methods._
 import info.mukel.telegrambot4s.models._
 import me.ex0ns.inlinexkcd.database.{Comics, Groups}
+import me.ex0ns.inlinexkcd.helpers.DocumentHelpers._
+import me.ex0ns.inlinexkcd.helpers.StringHelpers._
 import me.ex0ns.inlinexkcd.parser.XKCDHttpParser
 import org.mongodb.scala.bson.collection.immutable.Document
 import org.mongodb.scala.bson.{BsonInt32, BsonString}
@@ -27,9 +29,9 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling {
 
   private val MESSAGES_LIMIT = 30
   private val MESSAGES_LIMIT_TIME = 1000
-
   private val MESSAGE_ORDER_DELAY = 200
-  
+  private val EXPLAIN_XKCD_URL = "http://explainxkcd.com/"
+
   private val me = Await.result(api.request(GetMe), Duration.Inf)
   private val logger = Logger(LoggerFactory.getLogger(InlineXKCDBot.getClass))
 
@@ -37,7 +39,7 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling {
 
   logger.debug("Bot is up and running !")
 
-  def parseComic(notify : Boolean = false): Unit = {
+  def parseComic(notify: Boolean = false): Unit = {
 
     def notifyAllGroups(url: String, title: String, text: String) = {
       Groups.all.map((documents) => {
@@ -61,11 +63,13 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling {
           // Try to parse comics as long as ID is valid (many published the same day, or we missed one day)
           parser.parseID(id + 1) onSuccess {
             case response: HttpResponse if notify =>
-              val doc = Document(response.body)
-              List("img", "title", "alt", "link").flatMap(doc.get[BsonString](_).map(_.getValue)) match {
-                case img :: title :: alt :: link :: _ => 
-                  val text = alt.italic + (if (!link.isEmpty) s"\n\n$link" else "")
+              Document(response.body).getFields("img", "title", "alt", "link", "num") match {
+                case img :: title :: alt :: link :: num :: _ =>
+                  val text = alt.italic +
+                    (if (!link.isEmpty) s"\n\n$link" else "") +
+                    s"\n\n$EXPLAIN_XKCD_URL$num".urlWithAlt("explain xkcd")
                   notifyAllGroups(img, title.bold, text)
+                case _ => logger.info("Unable to retrieve all fields.")
               }
             case _ => parseComic(notify)
           }
@@ -73,9 +77,9 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling {
     }
   }
 
-  Comics.empty onSuccess  {
-    case true   => parser.parseAll()
-    case false  => parseComic() // Parse comics we could have missed
+  Comics.empty onSuccess {
+    case true => parser.parseAll()
+    case false => parseComic() // Parse comics we could have missed
   }
 
   task(parseComic(true)) executes Cron("00", "*/15", "9-23", "*", "*", "*", "*")
