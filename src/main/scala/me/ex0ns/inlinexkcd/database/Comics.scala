@@ -1,6 +1,7 @@
 package me.ex0ns.inlinexkcd.database
 
 import com.typesafe.scalalogging.Logger
+import me.ex0ns.inlinexkcd.helpers.DocumentHelpers._
 import org.mongodb.scala._
 import org.mongodb.scala.bson.{Document => _, _}
 import org.mongodb.scala.model.Filters._
@@ -8,8 +9,8 @@ import org.mongodb.scala.model.Sorts._
 import org.mongodb.scala.model.Updates._
 import org.slf4j.LoggerFactory
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-
 /**
   * Created by ex0ns on 11/4/16.
   */
@@ -37,7 +38,7 @@ final object Comics extends Collection with Database {
     * Search for comics (searches in transcript, title, alt)
     *
     * @param word the search keyword
-   */
+    */
   def search(word: String) : Future[Seq[Document]] = {
     collection.find(text(word)).sort(descending("_id")).limit(DEFAULT_LIMIT_SIZE).toFuture()
   }
@@ -46,13 +47,13 @@ final object Comics extends Collection with Database {
     * Find the ID of the last document
     * @return the document with the greater id
     */
-  def lastID = collection.find().sort(descending("_id")).head()
+  def lastID = collection.find().sort(descending("_id")).head().map(_.toComic)
 
   /**
     * Increase the number of view of one comic
     *
     * @param id the ID of the comic
-   */
+    */
   def increaseViews(id: Int): Future[Document] = {
     collection.findOneAndUpdate(equal("_id", id), inc("views", 1)).head()
   }
