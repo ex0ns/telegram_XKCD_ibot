@@ -5,7 +5,7 @@ import cronish.Cron
 import cronish.dsl._
 import fr.hmil.scalahttp.client.HttpResponse
 import info.mukel.telegrambot4s.api._
-import info.mukel.telegrambot4s.methods.{AnswerInlineQuery, GetMe, SendMessage, SendPhoto}
+import info.mukel.telegrambot4s.methods._
 import info.mukel.telegrambot4s.models._
 import me.ex0ns.inlinexkcd.database.{Comics, Groups}
 import me.ex0ns.inlinexkcd.parser.XKCDHttpParser
@@ -43,7 +43,7 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling {
       Groups.all.map((documents) => {
         documents.grouped(MESSAGES_LIMIT).foreach((documents) => {
           documents.flatMap(_.get[BsonString]("_id")).map(_.getValue.toLong).foreach(id => {
-            api.request(SendMessage(Left(id), title))
+            api.request(SendMessage(Left(id), title, Some(ParseMode.Markdown)))
             Thread.sleep(MESSAGE_ORDER_DELAY) // Avoid undeterministic sending order 
             api.request(SendPhoto(Left(id), Right(url)))
             Thread.sleep(MESSAGE_ORDER_DELAY)
