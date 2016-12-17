@@ -42,7 +42,6 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling {
     def notifyAllGroups(url: String, title: String, text: String) = {
 
       def notifyNewXKCD(group: Group): Unit = {
-        println(text)
         api.request(SendMessage(Left(group._id), title, Some(ParseMode.Markdown)))
         Thread.sleep(MESSAGE_ORDER_DELAY)
         api.request(SendPhoto(Left(group._id), Right(url)))
