@@ -41,7 +41,7 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling {
 
     def notifyAllGroups(url: String, title: String, text: String) = {
 
-      def notifyNewXKCD(group: Group) : Unit = {
+      def notifyNewXKCD(group: Group): Unit = {
         println(text)
         api.request(SendMessage(Left(group._id), title, Some(ParseMode.Markdown)))
         Thread.sleep(MESSAGE_ORDER_DELAY)
@@ -53,11 +53,6 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling {
       Groups.notifyAllGroups(notifyNewXKCD)
       parseComic(notify)
     }
-
-//    def test(group: Group) : Unit = {
-//      api.request(SendMessage(Left(group._id), """http://xkcd.com""".urlWithAlt("""diner""").italic, Some(ParseMode.Markdown)))
-//    }
-//    Groups.notifyAllGroups(test)
 
     Comics.lastID onSuccess {
       case Some(comic) =>
@@ -71,7 +66,7 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling {
 
   Comics.empty onSuccess  {
     case true   => parser.parseAll()
-    case false  => parseComic(true) // Parse comics we could have missed
+    case false  => parseComic() // Parse comics we could have missed
   }
 
   task(parseComic(true)) executes Cron("00", "*/15", "9-23", "*", "*", "*", "*")

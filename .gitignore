@@ -1,3 +1,4 @@
 telegram.key
 .idea/
 target/
+.test_remove.sh
