@@ -9,6 +9,7 @@ import info.mukel.telegrambot4s.methods._
 import info.mukel.telegrambot4s.models._
 import me.ex0ns.inlinexkcd.database.{Comics, Groups}
 import me.ex0ns.inlinexkcd.helpers.DocumentHelpers._
+import me.ex0ns.inlinexkcd.helpers.StringHelpers._
 import me.ex0ns.inlinexkcd.models.Group
 import me.ex0ns.inlinexkcd.parser.XKCDHttpParser
 import org.mongodb.scala.bson.collection.immutable.Document
@@ -40,12 +41,12 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling {
 
     def notifyAllGroups(url: String, title: String, text: String) = {
 
-      def notifyNewXKCD(group: Group) : Unit = {
+      def notifyNewXKCD(group: Group): Unit = {
         api.request(SendMessage(Left(group._id), title, Some(ParseMode.Markdown)))
         Thread.sleep(MESSAGE_ORDER_DELAY)
         api.request(SendPhoto(Left(group._id), Right(url)))
         Thread.sleep(MESSAGE_ORDER_DELAY)
-        api.request(SendMessage(Left(group._id), text))
+        api.request(SendMessage(Left(group._id), text, Some(ParseMode.Markdown), Some(true)))
       }
 
       Groups.notifyAllGroups(notifyNewXKCD)
@@ -56,7 +57,7 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling {
       case Some(comic) =>
         parser.parseID(comic._id + 1) onSuccess {
           case response: HttpResponse if notify =>
-            Document(response.body).toComic.foreach((comic) => notifyAllGroups(comic.img, comic.title, comic.getText))
+          Document(response.body).toComic.foreach((comic) => notifyAllGroups(comic.img, comic.getBoldTitle, comic.getText))
           case _ => parseComic(notify)
         }
     }
