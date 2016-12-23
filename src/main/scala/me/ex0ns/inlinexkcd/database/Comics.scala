@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+
 /**
   * Created by ex0ns on 11/4/16.
   */
@@ -19,7 +20,10 @@ final object Comics extends Collection with Database {
   override val collection = database.getCollection("comics")
   override val logger = Logger(LoggerFactory.getLogger(Comics.getClass))
 
-  collection.createIndex(Document("transcript" -> "text", "title" -> "text", "alt" -> "text")).head()
+  collection
+    .createIndex(
+      Document("transcript" -> "text", "title" -> "text", "alt" -> "text"))
+    .head()
 
   /**
     * Inserts a XKCD comic given its id
@@ -39,8 +43,12 @@ final object Comics extends Collection with Database {
     *
     * @param word the search keyword
     */
-  def search(word: String) : Future[Seq[Document]] = {
-    collection.find(text(word)).sort(descending("_id")).limit(DEFAULT_LIMIT_SIZE).toFuture()
+  def search(word: String): Future[Seq[Document]] = {
+    collection
+      .find(text(word))
+      .sort(descending("_id"))
+      .limit(DEFAULT_LIMIT_SIZE)
+      .toFuture()
   }
 
   /**

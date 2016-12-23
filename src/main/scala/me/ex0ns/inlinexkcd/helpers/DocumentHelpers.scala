@@ -13,22 +13,26 @@ object DocumentHelpers {
    */
   implicit class DocumentConverter(document: Document) {
 
-    def toGroup : Option[Group] = {
+    def toGroup: Option[Group] = {
       for {
         id <- document.get[BsonString]("_id").map(_.getValue())
       } yield Group(id.toLong)
     }
 
-    private def stringToOption(s: String) =  if(s.nonEmpty) Some(s)  else None
+    private def stringToOption(s: String) = if (s.nonEmpty) Some(s) else None
 
-    def toComic : Option[Comic] = {
+    def toComic: Option[Comic] = {
       for {
         img <- document.get[BsonString]("img").map(_.getValue())
         title <- document.get[BsonString]("title").map(_.getValue())
         num <- document.get[BsonInt32]("num").map(_.intValue())
-      } yield  {
-        val alt   = document.get[BsonString]("alt").flatMap(x => stringToOption(x.getValue))
-        val link  = document.get[BsonString]("link").flatMap(x => stringToOption(x.getValue))
+      } yield {
+        val alt = document
+          .get[BsonString]("alt")
+          .flatMap(x => stringToOption(x.getValue))
+        val link = document
+          .get[BsonString]("link")
+          .flatMap(x => stringToOption(x.getValue))
         Comic(num, title, img, num, alt, link)
       }
     }
