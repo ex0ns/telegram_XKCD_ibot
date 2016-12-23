@@ -3,21 +3,19 @@ package me.ex0ns.inlinexkcd.bot
 import com.typesafe.scalalogging.Logger
 import cronish.Cron
 import cronish.dsl._
-import fr.hmil.scalahttp.client.HttpResponse
 import info.mukel.telegrambot4s.api._
 import info.mukel.telegrambot4s.methods._
 import info.mukel.telegrambot4s.models._
+import me.ex0ns.inlinexkcd.database.Comics.DuplicatedComic
 import me.ex0ns.inlinexkcd.database.{Comics, Groups}
 import me.ex0ns.inlinexkcd.helpers.DocumentHelpers._
 import me.ex0ns.inlinexkcd.parser.XKCDHttpParser
-import org.mongodb.scala.bson.collection.immutable.Document
-import org.mongodb.scala.bson.{BsonInt32, BsonString}
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.io.Source
-import scala.util.Properties
+import scala.util.{Failure, Properties, Success}
 
 /**
   * Created by ex0ns on 06/08/16.
@@ -39,13 +37,12 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling {
   def parseComic(notify: Boolean = false): Unit = {
     Comics.lastID onSuccess {
       case Some(comic) =>
-        parser.parseID(comic._id + 1) onSuccess {
-          case response: HttpResponse if notify =>
-            Document(response.body).toComic.foreach(comic => {
-              comic.notifyAllGroups(api)
-              parseComic(notify)
-            })
-          case _ => parseComic(notify)
+        parser.parseID(comic._id + 1) onComplete {
+          case Success(newComic) if notify =>
+            newComic.notifyAllGroups(api)
+            parseComic(notify)
+          case Failure(_ : DuplicatedComic) => parseComic(notify)
+          case _ => logger.error("An unknown error happened, interrupting parsing")
         }
     }
   }

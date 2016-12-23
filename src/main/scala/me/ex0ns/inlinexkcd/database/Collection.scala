@@ -4,6 +4,8 @@ import org.mongodb.scala._
 import org.mongodb.scala.model.Filters._
 import org.mongodb.scala.model.Sorts._
 
+import scala.concurrent.Future
+
 /**
   * Created by ex0ns on 11/4/16.
   */
@@ -16,7 +18,7 @@ trait Collection {
     *
     * @param obj the document to insert (String representation)
     */
-  def insert(obj: String): Unit
+  def insert(obj: String): Future[_]
 
   /**
     * Retrieve a document given and ID

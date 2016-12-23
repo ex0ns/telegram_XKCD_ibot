@@ -3,6 +3,8 @@ package me.ex0ns.inlinexkcd.parser
 import com.typesafe.scalalogging.Logger
 import fr.hmil.scalahttp.client.HttpRequest
 import me.ex0ns.inlinexkcd.database.Comics
+import me.ex0ns.inlinexkcd.database.Comics.DuplicatedComic
+import me.ex0ns.inlinexkcd.models.Comic
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -23,19 +25,16 @@ class XKCDHttpParser {
     * @param id the ID of the strip to fetch
     * @return a future that may contain the HttpResponse (if successful)
     */
-  def parseID(id: Int): Future[_] = {
+  def parseID(id: Int): Future[Comic] = {
     val document = Comics.exists(id)
     document.flatMap {
       case true =>
         logger.debug(s"Document with id: $id already exists")
-        Future.successful(true) // we do not want to stop at the first item we have in the DB
+        Future.failed(new DuplicatedComic) // we do not want to stop at the first item we have in the DB
       case false =>
         HttpRequest(s"http://xkcd.com/$id/info.0.json")
           .send()
-          .map(httpResponse => {
-            Comics.insert(httpResponse.body)
-            httpResponse
-          })
+          .flatMap(comic => Comics.insert(comic.body))
     }
   }
 

@@ -21,7 +21,7 @@ final case class Comic(_id: Int,
       s"\n\nhttps://explainxkcd.com/$num"
 
   override def notify(group: Group)(implicit api: TelegramApiAkka): Unit = {
-    api.request(SendMessage(Left(group._id), title, Some(ParseMode.Markdown)))
+    api.request(SendMessage(Left(group._id), getBoldTitle, Some(ParseMode.Markdown)))
     Thread.sleep(MESSAGE_ORDER_DELAY)
     api.request(SendPhoto(Left(group._id), Right(img)))
     Thread.sleep(MESSAGE_ORDER_DELAY)
