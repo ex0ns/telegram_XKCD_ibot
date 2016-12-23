@@ -61,15 +61,11 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling {
     val results =
       if (inlineQuery.query.isEmpty) Comics.lasts
       else Comics.search(inlineQuery.query)
-    results.map(documents => {
-      val results = documents.map(
-        document =>
-          (document.get[BsonInt32]("_id").get.intValue().toString,
-            document.get[BsonString]("img").get.getValue))
 
-      val pictures = results.map {
-        case (id, url) => InlineQueryResultPhoto(id, url, url)
-      }
+    results.foreach(documents => {
+      val pictures = documents.flatMap(_.toComic).map(comic => {
+        InlineQueryResultPhoto(comic._id.toString, comic.img, comic.img)
+      })
       api.request(AnswerInlineQuery(inlineQuery.id, pictures))
     })
   }
