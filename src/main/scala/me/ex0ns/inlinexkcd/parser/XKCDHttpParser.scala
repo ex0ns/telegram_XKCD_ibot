@@ -3,6 +3,8 @@ package me.ex0ns.inlinexkcd.parser
 import com.typesafe.scalalogging.Logger
 import fr.hmil.scalahttp.client.HttpRequest
 import me.ex0ns.inlinexkcd.database.Comics
+import me.ex0ns.inlinexkcd.database.Comics.DuplicatedComic
+import me.ex0ns.inlinexkcd.models.Comic
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -23,17 +25,16 @@ class XKCDHttpParser {
     * @param id the ID of the strip to fetch
     * @return a future that may contain the HttpResponse (if successful)
     */
-  def parseID(id: Int) : Future[_] = {
+  def parseID(id: Int): Future[Comic] = {
     val document = Comics.exists(id)
     document.flatMap {
       case true =>
         logger.debug(s"Document with id: $id already exists")
-        Future.successful(true) // we do not want to stop at the first item we have in the DB
+        Future.failed(new DuplicatedComic) // we do not want to stop at the first item we have in the DB
       case false =>
-        HttpRequest(s"http://xkcd.com/$id/info.0.json").send().map(httpResponse => {
-          Comics.insert(httpResponse.body)
-          httpResponse
-        })
+        HttpRequest(s"http://xkcd.com/$id/info.0.json")
+          .send()
+          .flatMap(comic => Comics.insert(comic.body))
     }
   }
 
@@ -43,9 +44,11 @@ class XKCDHttpParser {
     * @param f The future to convert
     * @return A future of Try
     */
-  private def futureToFutureTry[T](f: Future[T]): Future[Try[T]] = f.map(Success(_)).recover({
-    case e => logger.warn(e.toString); Failure(e)
-  })
+  private def futureToFutureTry[T](f: Future[T]): Future[Try[T]] =
+    f.map(Success(_))
+      .recover({
+        case e => logger.warn(e.toString); Failure(e)
+      })
 
   /**
     * Fetch in parallel size pages, starting from startingPage, and returns the number of failed Future
@@ -54,7 +57,10 @@ class XKCDHttpParser {
     * @return the number of failed Future
     */
   private def bulkFetch(startingPage: Int, size: Int) = {
-    val t = Range(startingPage, startingPage+size).take(size).map(parseID).map(futureToFutureTry)
+    val t = Range(startingPage, startingPage + size)
+      .take(size)
+      .map(parseID)
+      .map(futureToFutureTry)
     val r = Await.result(Future.sequence(t), Duration.Inf)
     r.count(_.isFailure)
   }
@@ -64,7 +70,11 @@ class XKCDHttpParser {
     * @param step The number of pages to fetch in parallel
     */
   def parseAll(step: Int = 10) = {
-    Stream.from(0, step).map(x => bulkFetch(x, step)).takeWhile(_ != step).force
+    Stream
+      .from(0, step)
+      .map(x => bulkFetch(x, step))
+      .takeWhile(_ != step)
+      .force
   }
 
 }

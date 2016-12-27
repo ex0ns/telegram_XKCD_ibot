@@ -2,6 +2,7 @@ package me.ex0ns.inlinexkcd.database
 
 import com.typesafe.scalalogging.Logger
 import me.ex0ns.inlinexkcd.helpers.DocumentHelpers._
+import me.ex0ns.inlinexkcd.models.Comic
 import org.mongodb.scala._
 import org.mongodb.scala.bson.{Document => _, _}
 import org.mongodb.scala.model.Filters._
@@ -11,27 +12,38 @@ import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+
 /**
   * Created by ex0ns on 11/4/16.
   */
 final object Comics extends Collection with Database {
 
+  final class InvalidComicJSON extends Exception
+  final class DuplicatedComic extends Exception
+
   override val collection = database.getCollection("comics")
   override val logger = Logger(LoggerFactory.getLogger(Comics.getClass))
 
-  collection.createIndex(Document("transcript" -> "text", "title" -> "text", "alt" -> "text")).head()
+  collection
+    .createIndex(
+      Document("transcript" -> "text", "title" -> "text", "alt" -> "text"))
+    .head()
 
   /**
     * Inserts a XKCD comic given its id
     *
     * @param obj the ID of the strip to insert
     */
-  override def insert(obj: String) = {
-    val strip = Document(obj)
-    strip.get[BsonInt32]("num") match {
-      case Some(x) => collection.insertOne(strip + ("_id" -> x)).head()
-      case None => logger.warn("No num column found")
-    }
+  override def insert(obj: String) : Future[Comic] = {
+    val document = Document(obj)
+    val comic = document.toComic
+    if(comic.isDefined)
+      collection
+        .insertOne(document + ("_id" -> comic.get.num))
+        .head()
+        .map(_ => comic.get)
+    else
+      Future.failed(new InvalidComicJSON)
   }
 
   /**
@@ -39,8 +51,12 @@ final object Comics extends Collection with Database {
     *
     * @param word the search keyword
     */
-  def search(word: String) : Future[Seq[Document]] = {
-    collection.find(text(word)).sort(descending("_id")).limit(DEFAULT_LIMIT_SIZE).toFuture()
+  def search(word: String): Future[Seq[Document]] = {
+    collection
+      .find(text(word))
+      .sort(descending("_id"))
+      .limit(DEFAULT_LIMIT_SIZE)
+      .toFuture()
   }
 
   /**
