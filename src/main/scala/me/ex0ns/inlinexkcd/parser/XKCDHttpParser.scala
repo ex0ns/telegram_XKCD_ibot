@@ -32,7 +32,7 @@ class XKCDHttpParser {
         logger.debug(s"Document with id: $id already exists")
         Future.failed(new DuplicatedComic) // we do not want to stop at the first item we have in the DB
       case false =>
-        HttpRequest(s"http://xkcd.com/$id/info.0.json")
+        HttpRequest(s"https://xkcd.com/$id/info.0.json")
           .send()
           .flatMap(comic => Comics.insert(comic.body))
     }
