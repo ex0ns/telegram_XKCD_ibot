@@ -1,6 +1,6 @@
 package me.ex0ns.inlinexkcd.models
 
-import info.mukel.telegrambot4s.api.TelegramApiAkka
+import info.mukel.telegrambot4s.api.RequestHandler
 import info.mukel.telegrambot4s.methods.{ParseMode, SendMessage, SendPhoto}
 import me.ex0ns.inlinexkcd.helpers.StringHelpers._
 /**
@@ -20,12 +20,12 @@ final case class Comic(_id: Int,
       link.map(x => s"\n\n$x").getOrElse("") +
       s"\n\nhttps://explainxkcd.com/$num"
 
-  override def notify(group: Group)(implicit api: TelegramApiAkka): Unit = {
-    api.request(SendMessage(Left(group._id), getBoldTitle, Some(ParseMode.Markdown)))
+  override def notify(group: Group)(implicit request: RequestHandler): Unit = {
+    request(SendMessage(Left(group._id), getBoldTitle, Some(ParseMode.Markdown)))
     Thread.sleep(MESSAGE_ORDER_DELAY)
-    api.request(SendPhoto(Left(group._id), Right(img)))
+    request(SendPhoto(Left(group._id), Right(img)))
     Thread.sleep(MESSAGE_ORDER_DELAY)
-    api.request(
+    request(
       SendMessage(Left(group._id),
         getText,
         Some(ParseMode.Markdown),

@@ -5,11 +5,11 @@ organization := "ex0ns"
 version := "0.1"
 scalaVersion := "2.11.8"
 
-resolvers += "jitpack" at "https://jitpack.io"
+resolvers += Resolver.sonatypeRepo("snapshots")
 scalacOptions ++= Seq("-feature")
 
 libraryDependencies ++= Seq(
-  "com.github.mukel" %% "telegrambot4s" % "v1.2.0",
+  "info.mukel" %% "telegrambot4s" % "2.1.0-SNAPSHOT",
   "org.mongodb.scala" %% "mongo-scala-driver" % "1.1.1",
   "fr.hmil" %% "scala-http-client" % "0.3.0",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0",

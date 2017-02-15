@@ -1,6 +1,5 @@
 package me.ex0ns.inlinexkcd.bot
 
-import com.typesafe.scalalogging.Logger
 import cronish.Cron
 import cronish.dsl._
 import info.mukel.telegrambot4s.api._
@@ -10,7 +9,6 @@ import me.ex0ns.inlinexkcd.database.Comics.DuplicatedComic
 import me.ex0ns.inlinexkcd.database.{Comics, Groups}
 import me.ex0ns.inlinexkcd.helpers.DocumentHelpers._
 import me.ex0ns.inlinexkcd.parser.XKCDHttpParser
-import org.slf4j.LoggerFactory
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -20,16 +18,14 @@ import scala.util.{Failure, Properties, Success}
 /**
   * Created by ex0ns on 06/08/16.
   */
-object InlineXKCDBot extends TelegramBot with Commands with Polling {
+object InlineXKCDBot extends TelegramBot with Commands with Polling  {
 
   override def token =
     Properties
       .envOrNone("TELEGRAM_KEY")
       .getOrElse(Source.fromFile("telegram.key").getLines().next)
 
-  private val me = Await.result(api.request(GetMe), Duration.Inf)
-  private val logger = Logger(LoggerFactory.getLogger(InlineXKCDBot.getClass))
-
+  private val me = Await.result(request(GetMe), Duration.Inf)
   private val parser = new XKCDHttpParser()
 
   logger.debug("Bot is up and running !")
@@ -39,7 +35,7 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling {
       case Some(comic) =>
         parser.parseID(comic._id + 1) onComplete {
           case Success(newComic) if notify =>
-            newComic.notifyAllGroups(api)
+            newComic.notifyAllGroups(request)
             parseComic(notify)
           case Failure(_ : DuplicatedComic) => parseComic(notify)
           case _ => logger.error("An unknown error happened, interrupting parsing")
@@ -54,7 +50,7 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling {
 
   task(parseComic(true)) executes Cron("00", "*/15", "9-23", "*", "*", "*", "*")
 
-  override def handleInlineQuery(inlineQuery: InlineQuery) = {
+  override def onInlineQuery(inlineQuery: InlineQuery) = {
     val results =
       if (inlineQuery.query.isEmpty) Comics.lasts
       else Comics.search(inlineQuery.query)
@@ -63,11 +59,11 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling {
       val pictures = documents.flatMap(_.toComic).map(comic => {
         InlineQueryResultPhoto(comic._id.toString, comic.img, comic.img)
       })
-      api.request(AnswerInlineQuery(inlineQuery.id, pictures))
+      request(AnswerInlineQuery(inlineQuery.id, pictures))
     })
   }
 
-  override def handleMessage(message: Message) = {
+  override def onMessage(message: Message) = {
     message.newChatMember
       .filter((user) => user.id == me.id)
       .foreach(_ => {
@@ -84,7 +80,7 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling {
   /*
    * /setinlinefeedback must be enable for the bot
    */
-  override def handleChosenInlineResult(
+  override def onChosenInlineResult(
                                          chosenInlineResult: ChosenInlineResult) = {
     Comics.increaseViews(chosenInlineResult.resultId.toInt)
   }
