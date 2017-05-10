@@ -75,6 +75,11 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling  {
       .foreach(_ => {
         Groups.remove(message.chat.id.toString)
       })
+
+    message.text.foreach(m => {
+      if(m == "/start") Groups.insert(message.chat.id.toString)
+      if(m == "/stop") Groups.remove(message.chat.id.toString)
+    })
   }
 
   /*
