@@ -8,6 +8,7 @@ import info.mukel.telegrambot4s.models._
 import me.ex0ns.inlinexkcd.database.Comics.DuplicatedComic
 import me.ex0ns.inlinexkcd.database.{Comics, Groups}
 import me.ex0ns.inlinexkcd.helpers.DocumentHelpers._
+import me.ex0ns.inlinexkcd.helpers.StringHelpers._
 import me.ex0ns.inlinexkcd.parser.XKCDHttpParser
 
 import scala.concurrent.Await
@@ -15,9 +16,6 @@ import scala.concurrent.duration.Duration
 import scala.io.Source
 import scala.util.{Failure, Properties, Success}
 
-/**
-  * Created by ex0ns on 06/08/16.
-  */
 object InlineXKCDBot extends TelegramBot with Commands with Polling  {
 
   override def token =
@@ -76,17 +74,23 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling  {
         Groups.remove(message.chat.id.toString)
       })
 
-    message.text.foreach(m => {
-      if(m == "/start") Groups.insert(message.chat.id.toString)
-      if(m == "/stop") Groups.remove(message.chat.id.toString)
-    })
+    message.text.foreach {
+      case "/start" => Groups.insert(message.chat.id.toString)
+      case "/stop" => Groups.remove(message.chat.id.toString)
+      case "/stats" =>
+        Comics.top().map(cs => {
+          val text = cs.map(c => s"${c.title.altWithUrl(c.img)} - ${c.views} views\n").mkString
+          request(SendMessage(Left(message.chat.id), "Top 5 comics".bold + "\n" + text, Some(ParseMode.Markdown), disableWebPagePreview = Some(true)))
+        })
+    }
+
   }
 
   /*
    * /setinlinefeedback must be enable for the bot
    */
   override def onChosenInlineResult(
-                                         chosenInlineResult: ChosenInlineResult) = {
+                                     chosenInlineResult: ChosenInlineResult) = {
     Comics.increaseViews(chosenInlineResult.resultId.toInt)
   }
 }

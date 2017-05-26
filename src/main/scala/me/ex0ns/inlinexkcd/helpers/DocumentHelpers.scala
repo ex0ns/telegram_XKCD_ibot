@@ -4,9 +4,6 @@ import me.ex0ns.inlinexkcd.models.{Comic, Group}
 import org.mongodb.scala._
 import org.mongodb.scala.bson.{Document => _, _}
 
-/**
-  * Created by ex0ns on 12/13/16.
-  */
 object DocumentHelpers {
   /* We are currently waiting for the case class support of mongoDB driver
      See https://jira.mongodb.org/browse/SCALA-168
@@ -33,7 +30,10 @@ object DocumentHelpers {
         val link = document
           .get[BsonString]("link")
           .flatMap(x => stringToOption(x.getValue))
-        Comic(num, title, img, num, alt, link)
+        val views = document
+          .get[BsonNumber]("views")
+          .flatMap(x => { Some(x.intValue()) })
+        Comic(num, title, img, num, alt, link, views.getOrElse(0))
       }
     }
   }

@@ -4,7 +4,6 @@ import com.typesafe.scalalogging.Logger
 import me.ex0ns.inlinexkcd.helpers.DocumentHelpers._
 import me.ex0ns.inlinexkcd.models.Comic
 import org.mongodb.scala._
-import org.mongodb.scala.bson.{Document => _, _}
 import org.mongodb.scala.model.Filters._
 import org.mongodb.scala.model.Sorts._
 import org.mongodb.scala.model.Updates._
@@ -73,5 +72,8 @@ final object Comics extends Collection with Database {
   def increaseViews(id: Int): Future[Document] = {
     collection.findOneAndUpdate(equal("_id", id), inc("views", 1)).head()
   }
+
+  def top() : Future[Seq[Comic]] =
+    collection.find().sort(descending("views")).limit(5).map(_.toComic).toFuture().map(_.flatten)
 
 }
