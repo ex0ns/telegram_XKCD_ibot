@@ -53,7 +53,8 @@ final object Comics extends Collection with Database {
   def search(word: String): Future[Seq[Document]] = {
     collection
       .find(text(word))
-      .sort(descending("_id"))
+      .projection(metaTextScore("score"))
+      .sort(metaTextScore("score"))
       .limit(DEFAULT_LIMIT_SIZE)
       .toFuture()
   }
