@@ -9,7 +9,7 @@ resolvers += Resolver.sonatypeRepo("snapshots")
 scalacOptions ++= Seq("-feature")
 
 libraryDependencies ++= Seq(
-  "info.mukel" %% "telegrambot4s" % "2.1.0-SNAPSHOT",
+  "com.bot4s" %% "telegram-core" % "4.4.0-RC1",
   "org.mongodb.scala" %% "mongo-scala-driver" % "1.1.1",
   "fr.hmil" %% "scala-http-client" % "0.3.0",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0",
@@ -29,7 +29,7 @@ dockerfile in docker := {
   }
 }
 
-variablesForSubstitution := Map("TELEGRAM_KEY" -> Source.fromFile("telegram.key").getLines().next)
+envVars := Map("TELEGRAM_KEY" -> Source.fromFile("telegram.key").getLines().next)
 
 dockerImageCreationTask := docker.value
 
