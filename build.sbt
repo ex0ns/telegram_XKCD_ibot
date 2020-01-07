@@ -10,7 +10,7 @@ scalacOptions ++= Seq("-feature")
 
 libraryDependencies ++= Seq(
   "com.bot4s" %% "telegram-core" % "4.4.0-RC1",
-  "org.mongodb.scala" %% "mongo-scala-driver" % "1.1.1",
+  "org.mongodb.scala" %% "mongo-scala-driver" % "2.8.0",
   "fr.hmil" %% "scala-http-client" % "0.3.0",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0",
   "com.github.philcali" %% "cronish" % "0.1.3"
