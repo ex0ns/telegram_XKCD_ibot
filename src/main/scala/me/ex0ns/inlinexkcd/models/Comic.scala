@@ -5,12 +5,10 @@ import com.bot4s.telegram.api.RequestHandler
 import com.bot4s.telegram.methods.{ParseMode, SendMessage, SendPhoto}
 import com.bot4s.telegram.models.InputFile
 import me.ex0ns.inlinexkcd.helpers.StringHelpers._
-import scala.concurrent.ExecutionContext.Implicits.global
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-/**
-  * Created by ex0ns on 12/13/16.
-  */
+
 final case class Comic(_id: Int,
                        title: String,
                        img: String,

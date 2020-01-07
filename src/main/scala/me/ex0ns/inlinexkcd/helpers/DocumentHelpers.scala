@@ -1,6 +1,6 @@
 package me.ex0ns.inlinexkcd.helpers
 
-import me.ex0ns.inlinexkcd.models.{Comic, Group}
+import me.ex0ns.inlinexkcd.models.Comic
 import org.mongodb.scala._
 import org.mongodb.scala.bson.{Document => _, _}
 

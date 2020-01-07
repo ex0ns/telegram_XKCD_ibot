@@ -7,9 +7,6 @@ import org.mongodb.scala.model.Sorts._
 import scala.concurrent.Future
 import scala.reflect.ClassTag
 
-/**
-  * Created by ex0ns on 11/4/16.
-  */
 trait Collection[R] {
   implicit def ct: ClassTag[R]
   protected val DEFAULT_LIMIT_SIZE = 50

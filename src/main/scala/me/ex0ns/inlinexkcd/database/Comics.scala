@@ -15,9 +15,6 @@ import org.slf4j.LoggerFactory
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-/**
-  * Created by ex0ns on 11/4/16.
-  */
 final object Comics extends Collection[Comic] with Database {
   override def ct = implicitly
 
@@ -36,9 +33,13 @@ final object Comics extends Collection[Comic] with Database {
     .head()
 
   /**
-    * Inserts a XKCD comic given its id
+    * Inserts a comic given its description (JSON based)
+    * The JSON must contain at least the following attributes:
+    *   - img
+    *   - title
+    *   - num
     *
-    * @param obj the ID of the strip to insert
+    * @param obj the JSON of the strip to insert
     */
   override def insert(obj: String) : Future[Comic] = {
     val document = Document(obj)

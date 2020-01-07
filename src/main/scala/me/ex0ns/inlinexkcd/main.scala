@@ -6,9 +6,6 @@ import me.ex0ns.inlinexkcd.parser.XKCDHttpParser
 import scala.io.Source
 import scala.util.Properties
 
-/**
-  * Created by ex0ns on 6/8/16.
-  */
 object main {
   def main(args: Array[String]): Unit = {
     def token =

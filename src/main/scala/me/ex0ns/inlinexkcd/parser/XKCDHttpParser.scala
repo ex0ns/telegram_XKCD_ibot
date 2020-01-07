@@ -12,9 +12,6 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success, Try}
 
-/**
-  * Created by ex0ns on 6/8/16.
-  */
 class XKCDHttpParser {
 
   private val logger = Logger(LoggerFactory.getLogger(classOf[XKCDHttpParser]))
