@@ -1,12 +1,14 @@
 package me.ex0ns.inlinexkcd.database
 
 import com.typesafe.scalalogging.Logger
-import me.ex0ns.inlinexkcd.helpers.DocumentHelpers._
 import me.ex0ns.inlinexkcd.models.Group
-import org.mongodb.scala.Document
 import org.mongodb.scala.bson._
 import org.mongodb.scala.model.Filters._
 import org.slf4j.LoggerFactory
+import org.mongodb.scala.bson.codecs.Macros._
+import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
+import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
+import org.mongodb.scala.MongoCollection
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -14,11 +16,14 @@ import scala.concurrent.Future
 /**
   * Created by ex0ns on 11/4/16.
   */
-final object Groups extends Collection with Database {
+final object Groups extends Collection[Group] with Database {
+  override def ct = implicitly
 
   final class InvalidGroupJSON extends Exception
+  private val codecRegistry = fromRegistries(fromProviders(classOf[Group]), DEFAULT_CODEC_REGISTRY )
+  private val codecDB = database.withCodecRegistry(codecRegistry)
 
-  override val collection = database.getCollection("groups")
+  override val collection: MongoCollection[Group] = codecDB.getCollection("groups")
   override val logger = Logger(LoggerFactory.getLogger(Groups.getClass))
 
   /**
@@ -27,16 +32,12 @@ final object Groups extends Collection with Database {
     * @param groupId the ID of the group
     */
   override def insert(groupId: String) : Future[Group] = {
-    val document = Document("_id" -> BsonString(groupId))
-    val group = document.toGroup
+    val group: Group = Group(groupId.toLong) // Handle failure
 
-    if(group.isDefined)
-      collection
-        .insertOne(document)
-        .head()
-        .map(_ => group.get)
-    else
-      Future.failed(new InvalidGroupJSON)
+    collection
+      .insertOne(group)
+      .head()
+      .map(_ => group)
   }
 
   /**
@@ -54,6 +55,6 @@ final object Groups extends Collection with Database {
     collection
       .find()
       .toFuture()
-      .map((documents) => documents.flatMap(_.toGroup))
+      .map((documents) => documents)
 
 }

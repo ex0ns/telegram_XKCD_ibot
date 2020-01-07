@@ -69,7 +69,7 @@ class XKCDHttpParser {
     * Fetch and parse all XKCD comics
     * @param step The number of pages to fetch in parallel
     */
-  def parseAll(step: Int = 10) = {
+  def parseAll(step: Int = 10): Stream[Int] = {
     Stream
       .from(0, step)
       .map(x => bulkFetch(x, step))

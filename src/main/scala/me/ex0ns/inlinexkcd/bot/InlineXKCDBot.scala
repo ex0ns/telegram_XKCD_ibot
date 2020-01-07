@@ -6,14 +6,14 @@ import com.bot4s.telegram.clients.FutureSttpClient
 import com.bot4s.telegram.future.{Polling, TelegramBot}
 import com.bot4s.telegram.methods._
 import com.bot4s.telegram.models._
+import com.softwaremill.sttp.SttpBackend
 import com.softwaremill.sttp.okhttp.OkHttpFutureBackend
 import cronish.Cron
 import cronish.dsl._
 import me.ex0ns.inlinexkcd.database.Comics.DuplicatedComic
 import me.ex0ns.inlinexkcd.database.{Comics, Groups}
-import me.ex0ns.inlinexkcd.helpers.DocumentHelpers._
 import me.ex0ns.inlinexkcd.helpers.StringHelpers._
-import me.ex0ns.inlinexkcd.models.Group
+import me.ex0ns.inlinexkcd.models.{Comic, Group}
 import me.ex0ns.inlinexkcd.parser.XKCDHttpParser
 
 import scala.concurrent.duration.Duration
@@ -22,7 +22,7 @@ import scala.util.{Failure, Success}
 
 class InlineXKCDBot(val token: String) extends TelegramBot with Commands[Future] with Polling  {
 
-  implicit val backend = OkHttpFutureBackend()
+  implicit val backend: SttpBackend[Future, Nothing] = OkHttpFutureBackend()
   override val client: RequestHandler[Future] = new FutureSttpClient(token)
 
   private val me = Await.result(request(GetMe), Duration.Inf)
@@ -31,8 +31,7 @@ class InlineXKCDBot(val token: String) extends TelegramBot with Commands[Future]
   logger.debug("Bot is up and running !")
 
   def parseComic(notify: Boolean = false): Unit = {
-    Comics.lastID onSuccess {
-      case Some(comic) =>
+    Comics.lastID onSuccess { case comic: Comic =>
         parser.parseID(comic._id + 1) onComplete {
           case Success(newComic) if notify =>
             newComic.notifyAllGroups(request)
@@ -50,14 +49,14 @@ class InlineXKCDBot(val token: String) extends TelegramBot with Commands[Future]
 
   task(parseComic(true)) executes Cron("00", "*/15", "9-23", "*", "*", "*", "*")
 
-  override def receiveInlineQuery(inlineQuery: InlineQuery) = {
+  override def receiveInlineQuery(inlineQuery: InlineQuery): Future[Unit] = {
     val superFuture = super.receiveInlineQuery(inlineQuery)
     val results =
       if (inlineQuery.query.isEmpty) Comics.lasts
       else Comics.search(inlineQuery.query)
 
     results.foreach(documents => {
-      val pictures = documents.flatMap(_.toComic).map(comic => {
+      val pictures = documents.map(comic => {
         InlineQueryResultPhoto(comic._id.toString, comic.img, comic.img)
       })
       request(AnswerInlineQuery(inlineQuery.id, pictures))
@@ -66,7 +65,7 @@ class InlineXKCDBot(val token: String) extends TelegramBot with Commands[Future]
     superFuture
   }
 
-  override def receiveMessage(message: Message) = {
+  override def receiveMessage(message: Message): Future[Unit] = {
     val superFuture = super.receiveMessage(message)
     message.newChatMembers.foreach(users => users
       .filter((user) => user.id == me.id)

@@ -5,20 +5,23 @@ import org.mongodb.scala.model.Filters._
 import org.mongodb.scala.model.Sorts._
 
 import scala.concurrent.Future
+import scala.reflect.ClassTag
 
 /**
   * Created by ex0ns on 11/4/16.
   */
-trait Collection {
+trait Collection[R] {
+  implicit def ct: ClassTag[R]
   protected val DEFAULT_LIMIT_SIZE = 50
-  protected val collection: MongoCollection[Document]
+  protected val collection: MongoCollection[R]
+
 
   /**
     * Insert a new document into the database
     *
     * @param obj the document to insert (String representation)
     */
-  def insert(obj: String): Future[_]
+  def insert(obj: String): Future[R]
 
   /**
     * Retrieve a document given and ID
@@ -33,7 +36,7 @@ trait Collection {
     * @return wether the document exists or not
     */
   def exists(id: Int) =
-    collection.count(equal("_id", id)).map(l => l != 0).head()
+    collection.countDocuments(equal("_id", id)).map(l => l != 0).head()
 
   /**
     * Find the last DEFAULT_LIMIT_SIZE documents
