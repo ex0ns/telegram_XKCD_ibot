@@ -5,16 +5,7 @@ import org.mongodb.scala._
 import org.mongodb.scala.bson.{Document => _, _}
 
 object DocumentHelpers {
-  /* We are currently waiting for the case class support of mongoDB driver
-     See https://jira.mongodb.org/browse/SCALA-168
-   */
   implicit class DocumentConverter(document: Document) {
-
-    def toGroup: Option[Group] = {
-      for {
-        id <- document.get[BsonString]("_id").map(_.getValue())
-      } yield Group(id.toLong)
-    }
 
     private def stringToOption(s: String) = if (s.nonEmpty) Some(s) else None
 

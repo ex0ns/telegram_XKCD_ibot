@@ -32,10 +32,10 @@ final case class Comic(_id: Int,
       if response.isSuccess
       bytes = response.body
       photo = InputFile(img.split('/').last, bytes)
-      _ <- request(SendMessage(group._id, getBoldTitle, Some(ParseMode.Markdown)))
-      _ <- request(SendPhoto(group._id, photo))
+      _ <- request(SendMessage(group.id, getBoldTitle, Some(ParseMode.Markdown)))
+      _ <- request(SendPhoto(group.id, photo))
       _ <- request(
-        SendMessage(group._id,
+        SendMessage(group.id,
           getText,
           Some(ParseMode.Markdown),
           Some(true)))

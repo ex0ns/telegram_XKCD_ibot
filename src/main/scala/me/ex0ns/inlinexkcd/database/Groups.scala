@@ -1,5 +1,7 @@
 package me.ex0ns.inlinexkcd.database
 
+import java.util.concurrent.TimeUnit
+
 import com.typesafe.scalalogging.Logger
 import me.ex0ns.inlinexkcd.models.Group
 import org.mongodb.scala.bson._
@@ -8,10 +10,12 @@ import org.slf4j.LoggerFactory
 import org.mongodb.scala.bson.codecs.Macros._
 import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
+import org.bson.types.ObjectId
 import org.mongodb.scala.MongoCollection
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 
 /**
   * Created by ex0ns on 11/4/16.
@@ -45,7 +49,7 @@ final object Groups extends Collection[Group] with Database {
     * @param groupId the id of the group to remove
     */
   def remove(groupId: String) =
-    collection.deleteOne(equal("_id", BsonString(groupId))).toFuture()
+    collection.deleteOne(equal("id", groupId.toLong)).toFuture()
 
   /**
     * Find all the documents in the collection
