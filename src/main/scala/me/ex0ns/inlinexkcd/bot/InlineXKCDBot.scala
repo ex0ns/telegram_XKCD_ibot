@@ -1,27 +1,29 @@
 package me.ex0ns.inlinexkcd.bot
 
+import com.bot4s.telegram.api.RequestHandler
+import com.bot4s.telegram.api.declarative.Commands
+import com.bot4s.telegram.clients.FutureSttpClient
+import com.bot4s.telegram.future.{Polling, TelegramBot}
+import com.bot4s.telegram.methods._
+import com.bot4s.telegram.models._
+import com.softwaremill.sttp.okhttp.OkHttpFutureBackend
 import cronish.Cron
 import cronish.dsl._
-import info.mukel.telegrambot4s.api._
-import info.mukel.telegrambot4s.methods._
-import info.mukel.telegrambot4s.models._
 import me.ex0ns.inlinexkcd.database.Comics.DuplicatedComic
 import me.ex0ns.inlinexkcd.database.{Comics, Groups}
 import me.ex0ns.inlinexkcd.helpers.DocumentHelpers._
 import me.ex0ns.inlinexkcd.helpers.StringHelpers._
+import me.ex0ns.inlinexkcd.models.Group
 import me.ex0ns.inlinexkcd.parser.XKCDHttpParser
 
-import scala.concurrent.Await
 import scala.concurrent.duration.Duration
-import scala.io.Source
-import scala.util.{Failure, Properties, Success}
+import scala.concurrent.{Await, Future}
+import scala.util.{Failure, Success}
 
-object InlineXKCDBot extends TelegramBot with Commands with Polling  {
+class InlineXKCDBot(val token: String) extends TelegramBot with Commands[Future] with Polling  {
 
-  override def token =
-    Properties
-      .envOrNone("TELEGRAM_KEY")
-      .getOrElse(Source.fromFile("telegram.key").getLines().next)
+  implicit val backend = OkHttpFutureBackend()
+  override val client: RequestHandler[Future] = new FutureSttpClient(token)
 
   private val me = Await.result(request(GetMe), Duration.Inf)
   private val parser = new XKCDHttpParser()
@@ -48,7 +50,8 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling  {
 
   task(parseComic(true)) executes Cron("00", "*/15", "9-23", "*", "*", "*", "*")
 
-  override def onInlineQuery(inlineQuery: InlineQuery) = {
+  override def receiveInlineQuery(inlineQuery: InlineQuery) = {
+    val superFuture = super.receiveInlineQuery(inlineQuery)
     val results =
       if (inlineQuery.query.isEmpty) Comics.lasts
       else Comics.search(inlineQuery.query)
@@ -59,14 +62,18 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling  {
       })
       request(AnswerInlineQuery(inlineQuery.id, pictures))
     })
+
+    superFuture
   }
 
-  override def onMessage(message: Message) = {
-    message.newChatMember
+  override def receiveMessage(message: Message) = {
+    val superFuture = super.receiveMessage(message)
+    message.newChatMembers.foreach(users => users
       .filter((user) => user.id == me.id)
       .foreach(_ => {
         Groups.insert(message.chat.id.toString)
       })
+    )
 
     message.leftChatMember
       .filter((user) => user.id == me.id)
@@ -80,17 +87,17 @@ object InlineXKCDBot extends TelegramBot with Commands with Polling  {
       case "/stats" =>
         Comics.top().map(cs => {
           val text = cs.map(c => s"${c.title.altWithUrl(c.img)} - ${c.views} views\n").mkString
-          request(SendMessage(Left(message.chat.id), "Top 5 comics".bold + "\n" + text, Some(ParseMode.Markdown), disableWebPagePreview = Some(true)))
+          request(SendMessage(message.chat.id, "Top 5 comics".bold + "\n" + text, Some(ParseMode.Markdown), disableWebPagePreview = Some(true)))
         })
     }
-
+    superFuture
   }
 
   /*
    * /setinlinefeedback must be enable for the bot
    */
-  override def onChosenInlineResult(
+  override def receiveChosenInlineResult(
                                      chosenInlineResult: ChosenInlineResult) = {
-    Comics.increaseViews(chosenInlineResult.resultId.toInt)
+    Comics.increaseViews(chosenInlineResult.resultId.toInt).map(_ => ())
   }
 }

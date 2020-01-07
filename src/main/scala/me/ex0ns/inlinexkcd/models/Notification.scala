@@ -1,9 +1,10 @@
 package me.ex0ns.inlinexkcd.models
 
-import info.mukel.telegrambot4s.api.RequestHandler
+import com.bot4s.telegram.api.RequestHandler
 import me.ex0ns.inlinexkcd.database.Groups
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 trait Notification {
 
@@ -11,8 +12,8 @@ trait Notification {
   val MESSAGE_ORDER_DELAY   = 200
   val MESSAGES_LIMIT_TIME   = 1000
 
-  def notify(group: Group)(implicit request: RequestHandler): Unit
-  def notifyAllGroups(implicit request: RequestHandler) : Unit =
+  def notify(group: Group)(implicit request: RequestHandler[Future]): Unit
+  def notifyAllGroups(implicit request: RequestHandler[Future]) : Unit =
     Groups.all.map((groups) => {
       groups
         .grouped(MESSAGES_LIMIT)
