@@ -24,7 +24,7 @@ object DocumentHelpers {
         val views = document
           .get[BsonNumber]("views")
           .flatMap(x => { Some(x.intValue()) })
-        Comic(num, title, img, num, alt, link, views.getOrElse(0))
+        Comic(num, title, img, num, alt, link, views)
       }
     }
   }

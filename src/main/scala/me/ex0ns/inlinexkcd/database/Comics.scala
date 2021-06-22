@@ -29,7 +29,7 @@ final object Comics extends Collection[Comic] with Database {
 
   collection
     .createIndex(
-      Document("transcript" -> "text", "title" -> "text", "alt" -> "text"))
+      Document("transcript" -> "text", "title" -> "text", "alt" -> "text", "views" -> "int"))
     .head()
 
   /**

@@ -15,7 +15,7 @@ final case class Comic(_id: Int,
                        num: Int,
                        alt: Option[String],
                        link: Option[String],
-                       views: Int)
+                       views: Option[Int])
   extends Notification {
   def getBoldTitle: String = title.bold
 
