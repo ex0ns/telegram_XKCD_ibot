@@ -2,3 +2,10 @@ telegram.key
 .idea/
 target/
 .test_remove.sh
+.bloop/
+.bsp/
+.metals/
+.vscode/
+project/.bloop/
+project/metals.sbt
+project/project/

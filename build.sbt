@@ -14,8 +14,8 @@ scalacOptions ++= Seq("-feature")
 libraryDependencies ++= Seq(
   "com.bot4s" %% "telegram-core" % "5.0.0",
   "org.mongodb.scala" %% "mongo-scala-driver" % "2.8.0",
-  "com.softwaremill.sttp.client3" %% "core" % "3.3.7",
-  "com.softwaremill.sttp.client3" %% "async-http-client-backend-future" % "3.3.7",
+  "com.softwaremill.sttp.client3" %% "core" % "3.2.3",
+  "com.softwaremill.sttp.client3" %% "async-http-client-backend-future" % "3.2.3",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3",
   "eu.timepit" %% "fs2-cron-cron4s" % "0.7.1",
 )
