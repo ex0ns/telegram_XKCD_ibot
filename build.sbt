@@ -5,10 +5,6 @@ organization := "ex0ns"
 version := "0.1"
 scalaVersion := "2.13.6"
 
-resolvers += Resolver.sonatypeRepo("snapshots")
-resolvers += Resolver.bintrayRepo("hmil", "maven")
-
-
 scalacOptions ++= Seq("-feature")
 
 libraryDependencies ++= Seq(
