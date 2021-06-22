@@ -22,7 +22,7 @@ libraryDependencies ++= Seq(
 
 enablePlugins(DockerPlugin)
 
-dockerfile in docker := {
+dockerfile / docker := {
   val artifact: File = assembly.value
   val artifactTargetPath = s"/app/${artifact.name}"
 
@@ -35,7 +35,7 @@ dockerfile in docker := {
 
 envVars := Map("TELEGRAM_KEY" -> Source.fromFile("telegram.key").getLines().next)
 
-assemblyMergeStrategy in assembly := {
+assemblyMergeStrategy / assembly := {
  case PathList("META-INF", xs @ _*) => MergeStrategy.discard
  case x => MergeStrategy.first
 }
