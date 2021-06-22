@@ -51,7 +51,7 @@ class InlineXKCDBot(val token: String) extends TelegramBot with Commands[Future]
   }
 
   val cronScheduler = Cron4sScheduler.systemDefault[IO]
-  val evenSeconds = Cron.unsafeParse("0 */15 9-23 * * *")
+  val evenSeconds = Cron.unsafeParse("0 */15 9-23 * ? *")
 
   val startParse = Stream.eval(IO(parseComic(true)))
   val scheduled = cronScheduler.awakeEvery(evenSeconds) >> startParse
