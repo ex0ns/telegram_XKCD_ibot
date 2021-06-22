@@ -1,7 +1,7 @@
 package me.ex0ns.inlinexkcd.parser
 
 import com.typesafe.scalalogging.Logger
-import fr.hmil.scalahttp.client.HttpRequest
+import sttp.client3._
 import me.ex0ns.inlinexkcd.database.Comics
 import me.ex0ns.inlinexkcd.database.Comics.DuplicatedComic
 import me.ex0ns.inlinexkcd.models.Comic
@@ -11,9 +11,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success, Try}
+import sttp.client3.asynchttpclient.future.AsyncHttpClientFutureBackend
 
 class XKCDHttpParser {
 
+  private val backend = AsyncHttpClientFutureBackend()
   private val logger = Logger(LoggerFactory.getLogger(classOf[XKCDHttpParser]))
 
   /**
@@ -29,9 +31,15 @@ class XKCDHttpParser {
         logger.debug(s"Document with id: $id already exists")
         Future.failed(new DuplicatedComic) // we do not want to stop at the first item we have in the DB
       case false =>
-        HttpRequest(s"https://xkcd.com/$id/info.0.json")
-          .send()
-          .flatMap(comic => Comics.insert(comic.body))
+        basicRequest.get(uri"https://xkcd.com/$id/info.0.json")
+          .send(backend)
+          .map(_.body)
+          .flatMap { 
+            case Right(comic) => Comics.insert(comic)
+            case Left(e) => 
+              logger.error(s"Unable to retrieve comic: $e")
+              Future.failed(new Exception(s"Unable to retrieve comic: $e"))
+          }
     }
   }
 

@@ -3,17 +3,21 @@ import scala.io.Source
 name := "InlineXKCD"
 organization := "ex0ns"
 version := "0.1"
-scalaVersion := "2.11.8"
+scalaVersion := "2.13.6"
 
 resolvers += Resolver.sonatypeRepo("snapshots")
+resolvers += Resolver.bintrayRepo("hmil", "maven")
+
+
 scalacOptions ++= Seq("-feature")
 
 libraryDependencies ++= Seq(
-  "com.bot4s" %% "telegram-core" % "4.4.0-RC1",
+  "com.bot4s" %% "telegram-core" % "5.0.0",
   "org.mongodb.scala" %% "mongo-scala-driver" % "2.8.0",
-  "fr.hmil" %% "scala-http-client" % "0.3.0",
+  "com.softwaremill.sttp.client3" %% "core" % "3.3.7",
+  "com.softwaremill.sttp.client3" %% "async-http-client-backend-future" % "3.3.7",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0",
-  "com.github.philcali" %% "cronish" % "0.1.3"
+  "eu.timepit" %% "fs2-cron-cron4s" % "0.7.1",
 )
 
 enablePlugins(DockerPlugin, DockerComposePlugin)
@@ -33,3 +37,8 @@ envVars := Map("TELEGRAM_KEY" -> Source.fromFile("telegram.key").getLines().next
 
 dockerImageCreationTask := docker.value
 
+
+assemblyMergeStrategy in assembly := {
+ case PathList("META-INF", xs @ _*) => MergeStrategy.discard
+ case x => MergeStrategy.first
+}
