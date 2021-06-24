@@ -1,5 +1,6 @@
 telegram.key
 .idea/
+out/
 target/
 .test_remove.sh
 .bloop/
