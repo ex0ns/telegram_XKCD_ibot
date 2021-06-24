@@ -40,7 +40,7 @@ class InlineXKCDBot(val token: String) extends TelegramBot with Commands[Future]
             newComic.notifyAllGroups(request)
             parseComic(notify)
           case Failure(_ : DuplicatedComic) => parseComic(notify)
-          case e => logger.error(s"An unknown error happened, interrupting parsing: $e")
+          case Failure(e) => logger.error(s"An unknown error happened, interrupting parsing: $e")
         }
     }
   }
