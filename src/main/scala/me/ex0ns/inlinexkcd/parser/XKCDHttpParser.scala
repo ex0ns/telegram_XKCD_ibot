@@ -24,21 +24,21 @@ class XKCDHttpParser {
     * @param id the ID of the strip to fetch
     * @return a future that may contain the HttpResponse (if successful)
     */
-  def parseID(id: Int): Future[Comic] = {
+  def parseID(id: Int): Future[Either[Exception, Comic]] = {
     val document = Comics.exists(id)
     document.flatMap {
       case true =>
         logger.debug(s"Document with id: $id already exists")
-        Future.failed(new DuplicatedComic) // we do not want to stop at the first item we have in the DB
+        Future.successful(Left(new DuplicatedComic)) // we do not want to stop at the first item we have in the DB
       case false =>
         basicRequest.get(uri"https://xkcd.com/$id/info.0.json")
           .send(backend)
           .map(_.body)
           .flatMap { 
-            case Right(comic) => Comics.insert(comic)
+            case Right(comic) => Comics.insert(comic).map(comic => Right(comic))
             case Left(e) => 
               logger.error(s"Unable to retrieve comic: $e")
-              Future.failed(new Exception(s"Unable to retrieve comic: $e"))
+              Future.successful(Left(new Exception(s"Unable to retrieve comic: $e")))
           }
     }
   }

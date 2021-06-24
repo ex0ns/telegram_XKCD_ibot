@@ -16,9 +16,9 @@ object main {
         .envOrNone("TELEGRAM_KEY")
         .getOrElse(Source.fromFile("telegram.key").getLines().next)
 
-    if (args.length == 0) new InlineXKCDBot(token).run()
+    if (args.isEmpty) new InlineXKCDBot(token).run()
     else {
-      if (args(0) == "parse") {
+      if (args.head == "parse") {
         val parser = new XKCDHttpParser()
         if (args.length == 1) parser.parseAll()
         else parser.parseID(args(1).toInt)

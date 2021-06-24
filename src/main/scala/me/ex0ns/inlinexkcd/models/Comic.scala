@@ -24,7 +24,7 @@ final case class Comic(_id: Int,
       link.map(x => s"\n\n$x").getOrElse("") +
       s"\n\nhttps://explainxkcd.com/$num"
 
-  override def notify(group: Group)(implicit request: RequestHandler[Future]): Unit = {
+  override def notify(group: Group)(implicit request: RequestHandler[Future]): Future[Unit] = {
     for {
       response <- Future { scalaj.http.Http(img).asBytes }
       if response.isSuccess

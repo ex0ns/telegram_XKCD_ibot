@@ -12,13 +12,13 @@ trait Notification {
   val MESSAGE_ORDER_DELAY   = 200
   val MESSAGES_LIMIT_TIME   = 1000
 
-  def notify(group: Group)(implicit request: RequestHandler[Future]): Unit
-  def notifyAllGroups(implicit request: RequestHandler[Future]) : Unit =
+  def notify(group: Group)(implicit request: RequestHandler[Future]): Future[Unit]
+  def notifyAllGroups(implicit request: RequestHandler[Future]) : Future[Unit] =
     Groups.all.map((groups) => {
       groups
         .grouped(MESSAGES_LIMIT)
         .foreach((groupCluster) => {
-          groupCluster.foreach(notify)
+          Future.traverse(groupCluster)(notify)
           Thread.sleep(MESSAGES_LIMIT_TIME)
         })
     })

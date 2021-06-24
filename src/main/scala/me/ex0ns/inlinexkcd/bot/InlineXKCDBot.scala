@@ -33,16 +33,21 @@ class InlineXKCDBot(val token: String) extends TelegramBot with Commands[Future]
 
   logger.debug("Bot is up and running !")
 
-  def parseComic(notify: Boolean = false): Unit = {
-    Comics.lastID.map { comic =>
-        parser.parseID(comic._id + 1) onComplete {
-          case Success(newComic) if notify =>
-            newComic.notifyAllGroups(request)
-            parseComic(notify)
-          case Failure(_ : DuplicatedComic) => parseComic(notify)
-          case Failure(e : Exception) => logger.error(e.getMessage())
-          case _ => logger.error("An unknown error happened, interrupting parsing")
-        }
+  def parseComic(notify: Boolean = false): Future[Either[Exception, Comic]] = {
+    val nextComic = for {
+      comic <- Comics.lastID
+      newComic <- parser.parseID(comic._id + 1)
+    } yield newComic
+
+    nextComic.flatMap {
+      case Right(comic) =>
+        if(notify) comic.notifyAllGroups(request).flatMap(_ => parseComic(notify))
+        else parseComic(notify)
+      case Left(_ : DuplicatedComic) => parseComic(notify)
+      case x @ Left(_) => Future.successful(x)
+      case _ =>
+        logger.error("An unknown error happened, interrupting parsing")
+        Future.successful(Left(new Exception("An unknown error happened, interrupting parsing")))
     }
   }
 
