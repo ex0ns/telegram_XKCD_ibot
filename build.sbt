@@ -3,22 +3,22 @@ import scala.io.Source
 name := "InlineXKCD"
 organization := "ex0ns"
 version := "0.1"
-scalaVersion := "2.11.8"
+scalaVersion := "2.13.6"
 
-resolvers += Resolver.sonatypeRepo("snapshots")
 scalacOptions ++= Seq("-feature")
 
 libraryDependencies ++= Seq(
-  "info.mukel" %% "telegrambot4s" % "2.1.0-SNAPSHOT",
-  "org.mongodb.scala" %% "mongo-scala-driver" % "1.1.1",
-  "fr.hmil" %% "scala-http-client" % "0.3.0",
-  "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0",
-  "com.github.philcali" %% "cronish" % "0.1.3"
+  "com.bot4s" %% "telegram-core" % "5.0.1",
+  "org.mongodb.scala" %% "mongo-scala-driver" % "2.8.0",
+  "com.softwaremill.sttp.client3" %% "core" % "3.2.3",
+  "com.softwaremill.sttp.client3" %% "async-http-client-backend-future" % "3.2.3",
+  "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3",
+  "eu.timepit" %% "fs2-cron-cron4s" % "0.7.1",
 )
 
-enablePlugins(DockerPlugin, DockerComposePlugin)
+enablePlugins(DockerPlugin)
 
-dockerfile in docker := {
+docker / dockerfile := {
   val artifact: File = assembly.value
   val artifactTargetPath = s"/app/${artifact.name}"
 
@@ -29,7 +29,9 @@ dockerfile in docker := {
   }
 }
 
-variablesForSubstitution := Map("TELEGRAM_KEY" -> Source.fromFile("telegram.key").getLines().next)
+envVars := Map("TELEGRAM_KEY" -> Source.fromFile("telegram.key").getLines().next)
 
-dockerImageCreationTask := docker.value
-
+assembly / assemblyMergeStrategy := {
+ case PathList("META-INF", xs @ _*) => MergeStrategy.discard
+ case x => MergeStrategy.first
+}

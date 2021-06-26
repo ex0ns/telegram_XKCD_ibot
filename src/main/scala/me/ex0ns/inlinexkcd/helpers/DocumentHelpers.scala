@@ -1,20 +1,11 @@
 package me.ex0ns.inlinexkcd.helpers
 
-import me.ex0ns.inlinexkcd.models.{Comic, Group}
+import me.ex0ns.inlinexkcd.models.Comic
 import org.mongodb.scala._
 import org.mongodb.scala.bson.{Document => _, _}
 
 object DocumentHelpers {
-  /* We are currently waiting for the case class support of mongoDB driver
-     See https://jira.mongodb.org/browse/SCALA-168
-   */
   implicit class DocumentConverter(document: Document) {
-
-    def toGroup: Option[Group] = {
-      for {
-        id <- document.get[BsonString]("_id").map(_.getValue())
-      } yield Group(id.toLong)
-    }
 
     private def stringToOption(s: String) = if (s.nonEmpty) Some(s) else None
 
@@ -33,7 +24,7 @@ object DocumentHelpers {
         val views = document
           .get[BsonNumber]("views")
           .flatMap(x => { Some(x.intValue()) })
-        Comic(num, title, img, num, alt, link, views.getOrElse(0))
+        Comic(num, title, img, num, alt, link, views)
       }
     }
   }

@@ -3,7 +3,10 @@ package me.ex0ns.inlinexkcd.database
 import com.typesafe.scalalogging.Logger
 import me.ex0ns.inlinexkcd.helpers.DocumentHelpers._
 import me.ex0ns.inlinexkcd.models.Comic
+import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
 import org.mongodb.scala._
+import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
+import org.mongodb.scala.bson.codecs.Macros._
 import org.mongodb.scala.model.Filters._
 import org.mongodb.scala.model.Sorts._
 import org.mongodb.scala.model.Updates._
@@ -12,37 +15,43 @@ import org.slf4j.LoggerFactory
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-/**
-  * Created by ex0ns on 11/4/16.
-  */
-final object Comics extends Collection with Database {
+final object Comics extends Collection[Comic] with Database {
+  override def ct = implicitly
 
   final class InvalidComicJSON extends Exception
   final class DuplicatedComic extends Exception
 
-  override val collection = database.getCollection("comics")
+  private val codecRegistry = fromRegistries(fromProviders(classOf[Comic]), DEFAULT_CODEC_REGISTRY)
+  private val codecDB = database.withCodecRegistry(codecRegistry)
+
+  override val collection: MongoCollection[Comic] = codecDB.getCollection("comics")
   override val logger = Logger(LoggerFactory.getLogger(Comics.getClass))
 
   collection
     .createIndex(
-      Document("transcript" -> "text", "title" -> "text", "alt" -> "text"))
+      Document("transcript" -> "text", "title" -> "text", "alt" -> "text", "views" -> "int"))
     .head()
 
   /**
-    * Inserts a XKCD comic given its id
+    * Inserts a comic given its description (JSON based)
+    * The JSON must contain at least the following attributes:
+    *   - img
+    *   - title
+    *   - num
     *
-    * @param obj the ID of the strip to insert
+    * @param obj the JSON of the strip to insert
     */
   override def insert(obj: String) : Future[Comic] = {
     val document = Document(obj)
     val comic = document.toComic
-    if(comic.isDefined)
-      collection
-        .insertOne(document + ("_id" -> comic.get.num))
-        .head()
-        .map(_ => comic.get)
-    else
-      Future.failed(new InvalidComicJSON)
+    comic match {
+      case Some(comic) =>
+        collection
+          .insertOne(comic)
+          .head()
+          .map(_ => comic)
+      case None => Future.failed(new InvalidComicJSON)
+    }
   }
 
   /**
@@ -50,7 +59,7 @@ final object Comics extends Collection with Database {
     *
     * @param word the search keyword
     */
-  def search(word: String): Future[Seq[Document]] = {
+  def search(word: String): Future[Seq[Comic]] = {
     collection
       .find(text(word))
       .projection(metaTextScore("score"))
@@ -63,18 +72,18 @@ final object Comics extends Collection with Database {
     * Find the ID of the last document
     * @return the document with the greater id
     */
-  def lastID = collection.find().sort(descending("_id")).head().map(_.toComic)
+  def lastID: Future[Comic] = collection.find().sort(descending("_id")).head()
 
   /**
     * Increase the number of view of one comic
     *
     * @param id the ID of the comic
     */
-  def increaseViews(id: Int): Future[Document] = {
+  def increaseViews(id: Int): Future[Comic] = {
     collection.findOneAndUpdate(equal("_id", id), inc("views", 1)).head()
   }
 
   def top() : Future[Seq[Comic]] =
-    collection.find().sort(descending("views")).limit(5).map(_.toComic).toFuture().map(_.flatten)
+    collection.find().sort(descending("views")).limit(5).toFuture()
 
 }
