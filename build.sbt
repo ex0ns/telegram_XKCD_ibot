@@ -8,7 +8,7 @@ scalaVersion := "2.13.6"
 scalacOptions ++= Seq("-feature")
 
 libraryDependencies ++= Seq(
-  "com.bot4s" %% "telegram-core" % "5.0.1",
+  "com.bot4s" %% "telegram-core" % "5.1.0",
   "org.mongodb.scala" %% "mongo-scala-driver" % "2.8.0",
   "com.softwaremill.sttp.client3" %% "core" % "3.2.3",
   "com.softwaremill.sttp.client3" %% "async-http-client-backend-future" % "3.2.3",
