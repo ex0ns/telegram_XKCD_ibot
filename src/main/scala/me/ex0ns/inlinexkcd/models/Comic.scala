@@ -36,7 +36,7 @@ final case class Comic(_id: Int,
         SendMessage(group.id,
           getText,
           Some(ParseMode.Markdown),
-          Some(true)))
+          disableWebPagePreview = Some(true)))
     } yield ()
   }
 }
